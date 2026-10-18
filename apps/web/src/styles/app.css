@@ -157,6 +157,25 @@ a {
   background: transparent;
   border-color: var(--border);
 }
+.button--danger {
+  background: var(--bg);
+  color: var(--error);
+  border-color: var(--border);
+}
+.button--danger:hover:not(:disabled) {
+  background: var(--error-bg);
+  border-color: var(--error);
+}
+.button--danger-solid {
+  background: var(--error);
+  color: #fff;
+}
+.button--danger-solid:hover:not(:disabled) {
+  background: #b80012;
+}
+.button--danger-solid:disabled {
+  opacity: 0.7;
+}
 .button--small {
   min-height: 36px;
   padding: 0 16px;
@@ -539,6 +558,19 @@ a {
   background: var(--error-bg);
   color: var(--error);
 }
+.notice--success {
+  background: var(--success-bg);
+  color: var(--success);
+  margin-bottom: var(--space-3);
+}
+.notice--success:focus {
+  outline: none;
+}
+.notice--warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+  margin-bottom: var(--space-4);
+}
 .notice__title {
   margin: 0;
   font-weight: 600;
@@ -615,6 +647,63 @@ a {
   font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   font-size: 1.125rem;
   letter-spacing: 0.06em;
+}
+
+.details__struck {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 0.875rem;
+}
+.badge--confirmed {
+  background: var(--success-bg);
+  color: var(--success);
+}
+.badge--cancelled {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.cancel-box {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.cancel-box--confirm {
+  border-color: var(--error);
+  background: var(--error-bg);
+}
+.cancel-box__title {
+  margin: 0 0 4px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+.cancel-box__title:focus {
+  outline: none;
+}
+.cancel-box__body {
+  margin: 0 0 var(--space-2);
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+}
+.cancel-box .field__error {
+  margin-bottom: var(--space-2);
+}
+.cancel-box__actions {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+.manage-back {
+  margin-top: var(--space-1);
 }
 
 .manage {

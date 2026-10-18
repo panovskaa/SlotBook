@@ -71,6 +71,26 @@ export interface BookingLookupResponse {
   slot: BookedSlot;
 }
 
+/** GET /manage/:token — only the holder of the private link sees this, so it includes their own details. */
+export interface ManageBookingResponse {
+  timezone: string;
+  reference: string;
+  status: BookingStatus;
+  name: string;
+  email: string;
+  slot: BookedSlot;
+  /** False once the booking is cancelled or the 60-minute cutoff has passed. */
+  canCancel: boolean;
+  /** ISO 8601, UTC; set once cancelled */
+  cancelledAt: string | null;
+}
+
+/** POST /manage/:token/cancel. Cancelling twice is safe: the second call reports it was already done. */
+export interface CancelBookingResponse extends ManageBookingResponse {
+  alreadyCancelled: boolean;
+  message: string;
+}
+
 export interface HealthResponse {
   status: 'ok' | 'error';
   database: 'up' | 'down';

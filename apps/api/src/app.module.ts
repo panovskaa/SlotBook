@@ -1,4 +1,5 @@
 import { DynamicModule, Module } from '@nestjs/common';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { randomUUID } from 'crypto';
 import { LoggerModule } from 'nestjs-pino';
 import { BookingsModule } from './bookings/bookings.module';
@@ -6,8 +7,23 @@ import { Clock } from './common/clock';
 import { HostKeyGuard } from './common/host-key.guard';
 import { APP_CONFIG, AppConfig } from './config';
 import { HealthController } from './health/health.controller';
+import { ManageModule } from './manage/manage.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SlotsModule } from './slots/slots.module';
+
+/** Replaces the secret in /manage/:token and /waitlist/:token paths. */
+export function redactTokens(url: string | undefined): string | undefined {
+  return url?.replace(/\/(manage|waitlist)\/[^/?#]+/g, '/$1/[redacted]');
+}
+
+/**
+ * How a request appears in the logs. Route params are dropped because they repeat path segments,
+ * tokens included; the redacted URL already says which route was hit.
+ */
+export function serializeRequest(req: { url?: string; params?: unknown; [key: string]: unknown }) {
+  const { params: _params, ...rest } = req;
+  return { ...rest, url: redactTokens(req.url) };
+}
 
 @Module({})
 export class AppModule {
@@ -27,11 +43,15 @@ export class AppModule {
               return id;
             },
             redact: ['req.headers["x-host-key"]'],
+            // Private-link tokens are credentials; keep them out of the logs (NFR-4).
+            serializers: { req: serializeRequest },
           },
         }),
+        EventEmitterModule.forRoot(),
         PrismaModule,
         SlotsModule,
         BookingsModule,
+        ManageModule,
       ],
       controllers: [HealthController],
       providers: [{ provide: APP_CONFIG, useValue: config }, Clock, HostKeyGuard],

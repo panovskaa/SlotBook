@@ -16,7 +16,7 @@ The full requirements are in [SRS.md](SRS.md) and the visual design system in [D
 | FR-6 Booking reference | Done (`GET /bookings/ref/:code`) |
 | FR-11 Confirmation message | Template message only; the Gemini call isn't wired in yet |
 | `/health`, error format, request-ID logs, host key, Helmet, CORS | Done |
-| FR-7 Cancel page | Not started: the private link on the confirmation page leads to a "not found" page for now |
+| FR-7 Cancel through the private link | Done: `/manage/:token` page, `GET /manage/:token`, `POST /manage/:token/cancel`, 60-minute cutoff |
 | FR-8 to FR-10, Swagger, rate limiting, E2E (Playwright), axe checks, CI | Not started |
 
 ## Requirements
@@ -69,6 +69,10 @@ curl -X POST localhost:3000/bookings -H "Content-Type: application/json" \
 
 # Look up a booking by its reference (public, no personal data)
 curl localhost:3000/bookings/ref/K7M2-QX9P
+
+# View or cancel a booking with the token from its private link
+curl localhost:3000/manage/<token>
+curl -X POST localhost:3000/manage/<token>/cancel
 ```
 
 Every error has the shape `{ statusCode, code, message, details? }`.
@@ -86,6 +90,11 @@ The integration tests start a throwaway Postgres container with Testcontainers a
 migrations, so they never touch your local database. They run one file at a time because they share
 that container.
 
+## Troubleshooting
+
+- **`npm run build` fails with `EPERM … query_engine-windows.dll.node` on Windows.** A running
+  `npm run dev` holds Prisma's engine file open. Stop the dev server, then build again.
+
 ## Project layout
 
 ```
@@ -101,6 +110,8 @@ packages/shared  Rules, error codes and API types used by both
 - **Two locks against double booking.** A booking only goes through if its `UPDATE slot SET status='BOOKED' … WHERE status='AVAILABLE'` changes the row. Behind that, a partial unique index allows one confirmed booking per slot, and its error is returned as 409. Each layer alone holds up under the race test.
 - **Reference collisions.** A colliding reference makes Postgres abort the transaction, so the whole booking transaction is retried with a new code (up to 3 tries) rather than just the insert.
 - **Typed references.** Lookups accept any case, with or without the dash, and read O as 0 and I or L as 1, as Crockford Base32 allows.
+- **Private links stay private.** Only the token's SHA-256 hash is stored. A wrong or malformed token gets the same 404. Logged URLs show `/manage/[redacted]`, and route params are left out of request logs because they repeat the token. The web app sends no `Referer` header, so the link can't leak to other sites.
+- **Cancelling.** Cancelling closes **at** 60 minutes before the start. A second cancel returns 200 with "already cancelled", even after the cutoff. Simultaneous cancels are guarded like bookings: one cancels, the rest report it was already done. A freed slot emits a `slot.available` event for the waitlist (FR-9).
 - **Extra endpoint.** `GET /slots/:id` isn't in the SRS list. The booking page needs it to load its slot when someone opens a `/book/:slotId` link directly.
 - **"This week" before the first response.** The browser doesn't know the app's time zone until the first slot list arrives, so it uses its own zone to pick the opening week. This only matters around midnight on Sunday.
 - **The private link is shown once.** It exists only in the booking response. Reloading the confirmation page falls back to the public lookup and says the link was shown once.

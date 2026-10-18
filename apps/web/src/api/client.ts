@@ -1,8 +1,10 @@
 import type {
   ApiError,
   BookingLookupResponse,
+  CancelBookingResponse,
   CreateBookingRequest,
   CreateBookingResponse,
+  ManageBookingResponse,
   SlotResponse,
   SlotsResponse,
 } from '@slotbook/shared';
@@ -43,4 +45,8 @@ export const api = {
     request<CreateBookingResponse>('/bookings', { method: 'POST', body: JSON.stringify(body) }),
   lookup: (reference: string, signal?: AbortSignal) =>
     request<BookingLookupResponse>(`/bookings/ref/${encodeURIComponent(reference)}`, { signal }),
+  manage: (token: string, signal?: AbortSignal) =>
+    request<ManageBookingResponse>(`/manage/${encodeURIComponent(token)}`, { signal }),
+  cancel: (token: string) =>
+    request<CancelBookingResponse>(`/manage/${encodeURIComponent(token)}/cancel`, { method: 'POST' }),
 };
