@@ -91,6 +91,48 @@ export interface CancelBookingResponse extends ManageBookingResponse {
   message: string;
 }
 
+/** Booked slots ÷ published slots. `rate` is null when nothing was published, rather than 0 % or NaN. */
+export interface BookingRate {
+  booked: number;
+  published: number;
+  /** 0–1 */
+  rate: number | null;
+}
+
+/** GET /host/stats (FR-8). Deleted slots never count as published. */
+export interface HostStatsResponse {
+  timezone: string;
+  /** Every slot that isn't deleted, past and future */
+  totalPublished: number;
+  /** Confirmed bookings whose slot hasn't started */
+  upcomingBookings: number;
+  /** Slots a visitor could book right now: available and more than 30 minutes away */
+  remainingAvailable: number;
+  bookingRate: {
+    /** Slots that started in the last 30 days */
+    last30Days: BookingRate;
+    /** All slots that aren't deleted */
+    allTime: BookingRate;
+  };
+}
+
+/** One upcoming booking, as the host sees it. */
+export interface HostBookingDto {
+  id: string;
+  reference: string;
+  name: string;
+  email: string;
+  slotId: string;
+  slot: BookedSlot;
+  createdAt: string;
+}
+
+/** GET /host/bookings */
+export interface HostBookingsResponse {
+  timezone: string;
+  bookings: HostBookingDto[];
+}
+
 export interface HealthResponse {
   status: 'ok' | 'error';
   database: 'up' | 'down';

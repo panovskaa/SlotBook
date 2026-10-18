@@ -7,6 +7,7 @@ import { Clock } from './common/clock';
 import { HostKeyGuard } from './common/host-key.guard';
 import { APP_CONFIG, AppConfig } from './config';
 import { HealthController } from './health/health.controller';
+import { HostModule } from './host/host.module';
 import { ManageModule } from './manage/manage.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SlotsModule } from './slots/slots.module';
@@ -52,6 +53,7 @@ export class AppModule {
         SlotsModule,
         BookingsModule,
         ManageModule,
+        HostModule,
       ],
       controllers: [HealthController],
       providers: [{ provide: APP_CONFIG, useValue: config }, Clock, HostKeyGuard],

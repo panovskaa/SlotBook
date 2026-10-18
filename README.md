@@ -8,7 +8,7 @@ The full requirements are in [SRS.md](SRS.md) and the visual design system in [D
 | Area | State |
 |---|---|
 | Monorepo, database schema and all database constraints | Done |
-| FR-1 Create slots (host) | Done, API only (the host page comes with FR-8) |
+| FR-1 Create slots (host) | Done, from the dashboard or the API |
 | FR-2 Weekly calendar | Done: week in the URL, 7 columns on desktop, a day list below 768 px |
 | FR-3 Book a slot | Done: booking form and confirmation page |
 | FR-4 No double bookings | Done: guarded update, partial unique index, 20-request race test run 50 times |
@@ -17,7 +17,8 @@ The full requirements are in [SRS.md](SRS.md) and the visual design system in [D
 | FR-11 Confirmation message | Template message only; the Gemini call isn't wired in yet |
 | `/health`, error format, request-ID logs, host key, Helmet, CORS | Done |
 | FR-7 Cancel through the private link | Done: `/manage/:token` page, `GET /manage/:token`, `POST /manage/:token/cancel`, 60-minute cutoff |
-| FR-8 to FR-10, Swagger, rate limiting, E2E (Playwright), axe checks, CI | Not started |
+| FR-8 Host dashboard | Done: `/host` with stats, upcoming bookings, adding slots and deleting free ones |
+| FR-9, FR-10, Swagger, rate limiting, E2E (Playwright), axe checks, CI | Not started |
 
 ## Requirements
 
@@ -37,6 +38,10 @@ npm run dev                   # API on :3000, web app on :5173
 
 Then open http://localhost:5173. The seed adds slots on weekdays only, starting tomorrow, so if
 this week looks empty, use the arrow to go to the next week.
+
+The host dashboard is at http://localhost:5173/host. It asks for the `HOST_ACCESS_KEY` from your
+`.env`, which it keeps only until you close the tab (or press **Lock**). There's no link to it from
+the public pages.
 
 ## Environment variables
 
@@ -69,6 +74,11 @@ curl -X POST localhost:3000/bookings -H "Content-Type: application/json" \
 
 # Look up a booking by its reference (public, no personal data)
 curl localhost:3000/bookings/ref/K7M2-QX9P
+
+# Host only: dashboard numbers, upcoming bookings, delete a free slot
+curl localhost:3000/host/stats -H "X-Host-Key: $HOST_ACCESS_KEY"
+curl localhost:3000/host/bookings -H "X-Host-Key: $HOST_ACCESS_KEY"
+curl -X DELETE localhost:3000/host/slots/<slot id> -H "X-Host-Key: $HOST_ACCESS_KEY"
 
 # View or cancel a booking with the token from its private link
 curl localhost:3000/manage/<token>
@@ -112,6 +122,9 @@ packages/shared  Rules, error codes and API types used by both
 - **Typed references.** Lookups accept any case, with or without the dash, and read O as 0 and I or L as 1, as Crockford Base32 allows.
 - **Private links stay private.** Only the token's SHA-256 hash is stored. A wrong or malformed token gets the same 404. Logged URLs show `/manage/[redacted]`, and route params are left out of request logs because they repeat the token. The web app sends no `Referer` header, so the link can't leak to other sites.
 - **Cancelling.** Cancelling closes **at** 60 minutes before the start. A second cancel returns 200 with "already cancelled", even after the cutoff. Simultaneous cancels are guarded like bookings: one cancels, the rest report it was already done. A freed slot emits a `slot.available` event for the waitlist (FR-9).
+- **What the dashboard numbers mean.** *Published* is every slot that isn't deleted, past and future. *Upcoming bookings* are confirmed bookings whose slot hasn't started. *Open slots* are ones a visitor could book right now (available and more than 30 minutes away). The *booking rate* is booked ÷ published: "last 30 days" covers slots that started in the last 30 days, and "all time" covers every slot that isn't deleted. With nothing published, the rate shows "—" instead of 0 %. All the numbers come from one SQL query, so they describe the same moment.
+- **Deleting slots.** Deleting is a soft delete (status `DELETED`), so history stays intact. Only free slots that haven't started can be deleted. Delete and booking use the same guarded update, so if both happen at once, exactly one wins (tested 20 times over).
+- **New slots notify the waitlist.** Creating a bookable slot emits `slot.available`, as a cancellation does, ready for FR-9.
 - **Extra endpoint.** `GET /slots/:id` isn't in the SRS list. The booking page needs it to load its slot when someone opens a `/book/:slotId` link directly.
 - **"This week" before the first response.** The browser doesn't know the app's time zone until the first slot list arrives, so it uses its own zone to pick the opening week. This only matters around midnight on Sunday.
 - **The private link is shown once.** It exists only in the booking response. Reloading the confirmation page falls back to the public lookup and says the link was shown once.

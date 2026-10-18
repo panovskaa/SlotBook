@@ -3,6 +3,7 @@ import { SiteHeader } from './components/SiteHeader';
 import { BookPage } from './pages/BookPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { ConfirmationPage } from './pages/ConfirmationPage';
+import { HostPage } from './pages/HostPage';
 import { ManagePage } from './pages/ManagePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
@@ -29,6 +30,7 @@ export function App() {
           <Route path="book/:slotId" element={<BookPage />} />
           <Route path="confirmation/:ref" element={<ConfirmationPage />} />
           <Route path="manage/:token" element={<ManagePage />} />
+          <Route path="host" element={<HostPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

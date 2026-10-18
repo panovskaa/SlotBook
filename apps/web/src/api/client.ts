@@ -4,7 +4,11 @@ import type {
   CancelBookingResponse,
   CreateBookingRequest,
   CreateBookingResponse,
+  CreateSlotRequest,
+  HostBookingsResponse,
+  HostStatsResponse,
   ManageBookingResponse,
+  SlotDto,
   SlotResponse,
   SlotsResponse,
 } from '@slotbook/shared';
@@ -50,3 +54,17 @@ export const api = {
   cancel: (token: string) =>
     request<CancelBookingResponse>(`/manage/${encodeURIComponent(token)}/cancel`, { method: 'POST' }),
 };
+
+/** Host routes (FR-8). Each call carries the host key in X-Host-Key. */
+export function hostApi(key: string) {
+  const headers = { 'X-Host-Key': key };
+  return {
+    stats: (signal?: AbortSignal) => request<HostStatsResponse>('/host/stats', { headers, signal }),
+    bookings: (signal?: AbortSignal) => request<HostBookingsResponse>('/host/bookings', { headers, signal }),
+    createSlot: (body: CreateSlotRequest) =>
+      request<SlotDto>('/host/slots', { method: 'POST', headers, body: JSON.stringify(body) }),
+    deleteSlot: (id: string) => request<null>(`/host/slots/${encodeURIComponent(id)}`, { method: 'DELETE', headers }),
+  };
+}
+
+export type HostApi = ReturnType<typeof hostApi>;

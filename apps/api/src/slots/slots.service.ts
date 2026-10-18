@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma, Slot } from '@prisma/client';
 import {
   ErrorCode,
@@ -13,6 +14,7 @@ import { AppException } from '../common/app-exception';
 import { Clock } from '../common/clock';
 import { startOfNextZonedDay, startOfZonedDay, zonedToUtc } from '../common/time';
 import { APP_CONFIG, AppConfig } from '../config';
+import { SLOT_AVAILABLE, SlotAvailableEvent } from '../events';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSlotDto } from './dto/create-slot.dto';
 import { ListSlotsQuery } from './dto/list-slots.query';
@@ -28,6 +30,7 @@ export class SlotsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly clock: Clock,
+    private readonly events: EventEmitter2,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
@@ -45,14 +48,42 @@ export class SlotsService {
     }
     const endsAt = new Date(startsAt.getTime() + dto.durationMinutes * 60_000);
 
+    let slot: Slot;
     try {
-      const slot = await this.prisma.slot.create({ data: { startsAt, endsAt } });
-      return this.toDto(slot, now);
+      slot = await this.prisma.slot.create({ data: { startsAt, endsAt } });
     } catch (err) {
       if (isOverlapViolation(err)) {
         throw new AppException(409, ErrorCode.SLOT_OVERLAP, 'This slot overlaps one you have already published');
       }
       throw err;
+    }
+    const created = this.toDto(slot, now);
+    // FR-9: a new slot is an opening for anyone waiting on that date.
+    if (created.state === 'AVAILABLE') {
+      this.events.emit(SLOT_AVAILABLE, { slotId: slot.id, startsAt: slot.startsAt } satisfies SlotAvailableEvent);
+    }
+    return created;
+  }
+
+  /**
+   * FR-8: the host can delete a slot nobody has booked. It's a soft delete (status DELETED), guarded
+   * like booking: if a visitor books at the same moment, exactly one of the two wins.
+   */
+  async remove(id: string): Promise<void> {
+    const now = this.clock.now();
+    const slot = await this.prisma.slot.findUnique({ where: { id } });
+    if (!slot || slot.status === 'DELETED') {
+      throw new AppException(404, ErrorCode.NOT_FOUND, 'This slot does not exist');
+    }
+    if (hasStarted(slot.startsAt, now)) {
+      throw new AppException(400, ErrorCode.SLOT_IN_PAST, 'A slot that has already started cannot be deleted');
+    }
+    const { count } = await this.prisma.slot.updateMany({
+      where: { id, status: 'AVAILABLE' },
+      data: { status: 'DELETED' },
+    });
+    if (count === 0) {
+      throw new AppException(409, ErrorCode.SLOT_ALREADY_BOOKED, 'This slot is booked, so it cannot be deleted');
     }
   }
 

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { ErrorCode, SlotDto, SlotResponse, SlotsResponse } from '@slotbook/shared';
 import { AppException } from '../common/app-exception';
 import { HostKeyGuard } from '../common/host-key.guard';
@@ -34,5 +34,11 @@ export class HostSlotsController {
   @HttpCode(201)
   create(@Body() dto: CreateSlotDto): Promise<SlotDto> {
     return this.slots.create(dto);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  remove(@Param('id', new ParseUUIDPipe({ exceptionFactory: () => notFound() })) id: string): Promise<void> {
+    return this.slots.remove(id);
   }
 }

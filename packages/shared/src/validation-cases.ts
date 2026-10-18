@@ -10,6 +10,31 @@ export interface BookingInputCase {
   invalidField: 'name' | 'email' | null;
 }
 
+export interface SlotInputCase {
+  label: string;
+  input: { date: unknown; startTime: unknown; durationMinutes: unknown };
+  invalidField: 'date' | 'startTime' | 'durationMinutes' | null;
+}
+
+/** Format rules only; rules that depend on "now" (past, cutoff) are tested with a controlled clock. */
+export const SLOT_INPUT_CASES: SlotInputCase[] = [
+  { label: 'a normal slot', input: { date: '2027-03-01', startTime: '09:00', durationMinutes: 30 }, invalidField: null },
+  { label: 'the shortest slot', input: { date: '2027-03-01', startTime: '09:00', durationMinutes: 15 }, invalidField: null },
+  { label: 'the longest slot', input: { date: '2027-03-01', startTime: '09:00', durationMinutes: 240 }, invalidField: null },
+  { label: 'midnight', input: { date: '2027-03-01', startTime: '00:00', durationMinutes: 30 }, invalidField: null },
+  { label: 'a leap day', input: { date: '2028-02-29', startTime: '09:00', durationMinutes: 30 }, invalidField: null },
+  { label: 'a day that does not exist', input: { date: '2027-02-29', startTime: '09:00', durationMinutes: 30 }, invalidField: 'date' },
+  { label: 'a date in the wrong format', input: { date: '01/03/2027', startTime: '09:00', durationMinutes: 30 }, invalidField: 'date' },
+  { label: 'an empty date', input: { date: '', startTime: '09:00', durationMinutes: 30 }, invalidField: 'date' },
+  { label: 'hour 24', input: { date: '2027-03-01', startTime: '24:00', durationMinutes: 30 }, invalidField: 'startTime' },
+  { label: 'a time with seconds', input: { date: '2027-03-01', startTime: '09:00:00', durationMinutes: 30 }, invalidField: 'startTime' },
+  { label: 'an empty time', input: { date: '2027-03-01', startTime: '', durationMinutes: 30 }, invalidField: 'startTime' },
+  { label: 'a duration under 15', input: { date: '2027-03-01', startTime: '09:00', durationMinutes: 10 }, invalidField: 'durationMinutes' },
+  { label: 'a duration over 240', input: { date: '2027-03-01', startTime: '09:00', durationMinutes: 255 }, invalidField: 'durationMinutes' },
+  { label: 'a duration off the 15-minute grid', input: { date: '2027-03-01', startTime: '09:00', durationMinutes: 20 }, invalidField: 'durationMinutes' },
+  { label: 'a fractional duration', input: { date: '2027-03-01', startTime: '09:00', durationMinutes: 30.5 }, invalidField: 'durationMinutes' },
+];
+
 export const BOOKING_INPUT_CASES: BookingInputCase[] = [
   { label: 'a normal name and email', input: { name: 'Ada Lovelace', email: 'ada@example.com' }, invalidField: null },
   { label: 'surrounding spaces', input: { name: '  Ada  ', email: '  ada@example.com ' }, invalidField: null },

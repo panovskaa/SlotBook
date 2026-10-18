@@ -1,3 +1,4 @@
+import { SLOT_INPUT_CASES } from '@slotbook/shared';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { CreateSlotDto } from './create-slot.dto';
@@ -32,5 +33,10 @@ describe('CreateSlotDto', () => {
 
   it('rejects unknown fields', () => {
     expect(failedFields({ ...valid, endsAt: '2026-11-03T11:00' })).toEqual(['endsAt']);
+  });
+
+  // The same table runs against the host form's zod schema (apps/web/src/host/slotSchema.test.ts).
+  it.each(SLOT_INPUT_CASES)('shared case: $label', ({ input, invalidField }) => {
+    expect(failedFields(input)).toEqual(invalidField ? [invalidField] : []);
   });
 });
