@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
@@ -12,5 +13,10 @@ export default defineConfig({
     port: 5173,
     // The browser calls /api/...; Vite forwards it to the NestJS API without the /api prefix.
     proxy: { '/api': { target: 'http://localhost:3000', rewrite: (path) => path.replace(/^\/api/, '') } },
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    css: false,
   },
 });

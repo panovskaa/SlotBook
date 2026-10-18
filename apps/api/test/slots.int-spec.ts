@@ -205,6 +205,12 @@ describe('Slots (FR-1, FR-2, FR-5)', () => {
       ]);
     });
 
+    it('includes a slot that starts exactly at midnight on the first day of the range', async () => {
+      await at('00:00', 30, '2026-11-09');
+      const res = await list({ from: '2026-11-09', to: '2026-11-15' });
+      expect(res.body.slots).toHaveLength(1);
+    });
+
     it.each([
       ['a missing "to"', { from: '2026-11-02' }],
       ['a bad date', { from: '2026-11-02', to: 'next week' }],
@@ -214,6 +220,25 @@ describe('Slots (FR-1, FR-2, FR-5)', () => {
       const res = await list(query as typeof WEEK);
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('VALIDATION_ERROR');
+    });
+  });
+
+  describe('one slot', () => {
+    it('returns the slot and the time zone', async () => {
+      const { body: created } = await createSlot({ date: '2026-11-03', startTime: '10:00', durationMinutes: 30 }).expect(201);
+      const res = await request(t.app.getHttpServer()).get(`/slots/${created.id}`);
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ timezone: 'Europe/Berlin', slot: created });
+    });
+
+    it('returns 404 for a deleted slot, a slot that has started and an unknown or malformed ID', async () => {
+      const { body: created } = await createSlot({ date: '2026-11-02', startTime: '10:00', durationMinutes: 30 }).expect(201);
+      t.clock.set('2026-11-02T09:00:00Z');
+      for (const id of [created.id, '3f1c2a9e-5b6d-4c7e-8f90-1a2b3c4d5e6f', 'not-a-uuid']) {
+        const res = await request(t.app.getHttpServer()).get(`/slots/${id}`);
+        expect(res.status).toBe(404);
+        expect(res.body.code).toBe('NOT_FOUND');
+      }
     });
   });
 

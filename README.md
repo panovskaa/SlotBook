@@ -8,15 +8,16 @@ The full requirements are in [SRS.md](SRS.md) and the visual design system in [D
 | Area | State |
 |---|---|
 | Monorepo, database schema and all database constraints | Done |
-| FR-1 Create slots (host) | Done, API only |
-| FR-2 Weekly calendar | API done (`GET /slots`); page not built yet |
-| FR-5 Availability rules | Done in the API; frontend checks come with the pages |
-| FR-3 Book a slot | Done, API only (`POST /bookings`) |
+| FR-1 Create slots (host) | Done, API only (the host page comes with FR-8) |
+| FR-2 Weekly calendar | Done: week in the URL, 7 columns on desktop, a day list below 768 px |
+| FR-3 Book a slot | Done: booking form and confirmation page |
 | FR-4 No double bookings | Done: guarded update, partial unique index, 20-request race test run 50 times |
+| FR-5 Availability rules | Done: one shared table of cases runs against the API DTO and the web form |
 | FR-6 Booking reference | Done (`GET /bookings/ref/:code`) |
 | FR-11 Confirmation message | Template message only; the Gemini call isn't wired in yet |
 | `/health`, error format, request-ID logs, host key, Helmet, CORS | Done |
-| FR-7 to FR-10, Swagger, rate limiting, frontend pages, E2E, CI | Not started |
+| FR-7 Cancel page | Not started: the private link on the confirmation page leads to a "not found" page for now |
+| FR-8 to FR-10, Swagger, rate limiting, E2E (Playwright), axe checks, CI | Not started |
 
 ## Requirements
 
@@ -33,6 +34,9 @@ npx prisma migrate dev        # creates the tables and constraints
 npm run seed                  # optional: two weeks of sample slots
 npm run dev                   # API on :3000, web app on :5173
 ```
+
+Then open http://localhost:5173. The seed adds slots on weekdays only, starting tomorrow, so if
+this week looks empty, use the arrow to go to the next week.
 
 ## Environment variables
 
@@ -56,6 +60,9 @@ curl -X POST localhost:3000/host/slots \
 # List the slots in a week (public)
 curl "localhost:3000/slots?from=2026-11-30&to=2026-12-06"
 
+# One slot, for the booking page (public; not in the SRS endpoint list)
+curl localhost:3000/slots/<slot id>
+
 # Book a slot (public). The response holds the reference and the private manage link.
 curl -X POST localhost:3000/bookings -H "Content-Type: application/json" \
   -d '{"slotId":"<slot id>","name":"Ada Lovelace","email":"ada@example.com"}'
@@ -72,6 +79,7 @@ Every error has the shape `{ statusCode, code, message, details? }`.
 npm test                                   # everything
 npm run test:unit -w @slotbook/api         # fast, no database
 npm run test:int -w @slotbook/api          # starts its own Postgres in Docker
+npm test -w @slotbook/web                  # Vitest + React Testing Library
 ```
 
 The integration tests start a throwaway Postgres container with Testcontainers and apply the real
@@ -93,5 +101,8 @@ packages/shared  Rules, error codes and API types used by both
 - **Two locks against double booking.** A booking only goes through if its `UPDATE slot SET status='BOOKED' … WHERE status='AVAILABLE'` changes the row. Behind that, a partial unique index allows one confirmed booking per slot, and its error is returned as 409. Each layer alone holds up under the race test.
 - **Reference collisions.** A colliding reference makes Postgres abort the transaction, so the whole booking transaction is retried with a new code (up to 3 tries) rather than just the insert.
 - **Typed references.** Lookups accept any case, with or without the dash, and read O as 0 and I or L as 1, as Crockford Base32 allows.
+- **Extra endpoint.** `GET /slots/:id` isn't in the SRS list. The booking page needs it to load its slot when someone opens a `/book/:slotId` link directly.
+- **"This week" before the first response.** The browser doesn't know the app's time zone until the first slot list arrives, so it uses its own zone to pick the opening week. This only matters around midnight on Sunday.
+- **The private link is shown once.** It exists only in the booking response. Reloading the confirmation page falls back to the public lookup and says the link was shown once.
 - **Extra error code.** Unexpected server errors use `INTERNAL_ERROR`, which isn't in the SRS list. It should never appear in normal use.
 - **Package versions.** NestJS 11, Prisma 6, TypeScript 5.9 and Vite 7 are pinned on purpose instead of the newest majors, because they're well proven together.

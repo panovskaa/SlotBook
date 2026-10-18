@@ -1,6 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma, Slot } from '@prisma/client';
-import { ErrorCode, SlotDto, SlotState, SlotsResponse, hasStarted, isWithinBookingWindow } from '@slotbook/shared';
+import {
+  ErrorCode,
+  SlotDto,
+  SlotResponse,
+  SlotState,
+  SlotsResponse,
+  hasStarted,
+  isWithinBookingWindow,
+} from '@slotbook/shared';
 import { AppException } from '../common/app-exception';
 import { Clock } from '../common/clock';
 import { startOfNextZonedDay, startOfZonedDay, zonedToUtc } from '../common/time';
@@ -61,12 +69,22 @@ export class SlotsService {
     }
 
     const now = this.clock.now();
-    const visibleFrom = from > now ? from : now;
     const slots = await this.prisma.slot.findMany({
-      where: { status: { not: 'DELETED' }, startsAt: { gt: visibleFrom, lt: to } },
+      // Inclusive of the range start (a midnight slot counts), but only slots that haven't started.
+      where: { status: { not: 'DELETED' }, startsAt: { gte: from, gt: now, lt: to } },
       orderBy: { startsAt: 'asc' },
     });
     return { timezone, slots: slots.map((s) => this.toDto(s, now)) };
+  }
+
+  /** One slot, for the booking page. Deleted slots and slots that have started don't exist for visitors. */
+  async findOne(id: string): Promise<SlotResponse> {
+    const now = this.clock.now();
+    const slot = await this.prisma.slot.findUnique({ where: { id } });
+    if (!slot || slot.status === 'DELETED' || hasStarted(slot.startsAt, now)) {
+      throw new AppException(404, ErrorCode.NOT_FOUND, 'This slot does not exist');
+    }
+    return { timezone: this.config.timezone, slot: this.toDto(slot, now) };
   }
 
   toDto(slot: Slot, now: Date): SlotDto {

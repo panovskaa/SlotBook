@@ -1,3 +1,4 @@
+import { BOOKING_INPUT_CASES } from '@slotbook/shared';
 import { plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { CreateBookingDto } from './create-booking.dto';
@@ -40,5 +41,10 @@ describe('CreateBookingDto', () => {
 
   it('rejects unknown fields', () => {
     expect(parse({ ...valid, status: 'CANCELLED' }).failed).toEqual(['status']);
+  });
+
+  // The same table runs against the frontend's zod schema (apps/web/src/booking/schema.test.ts).
+  it.each(BOOKING_INPUT_CASES)('shared case: $label', ({ input, invalidField }) => {
+    expect(parse({ slotId: valid.slotId, ...input }).failed).toEqual(invalidField ? [invalidField] : []);
   });
 });

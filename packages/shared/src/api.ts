@@ -28,6 +28,12 @@ export interface SlotsResponse {
   slots: SlotDto[];
 }
 
+/** GET /slots/:id */
+export interface SlotResponse {
+  timezone: string;
+  slot: SlotDto;
+}
+
 export type BookingStatus = 'CONFIRMED' | 'CANCELLED';
 
 export interface CreateBookingRequest {

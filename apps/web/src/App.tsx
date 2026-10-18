@@ -1,27 +1,35 @@
-import type { HealthResponse } from '@slotbook/shared';
-import { useEffect, useState } from 'react';
+import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom';
+import { SiteHeader } from './components/SiteHeader';
+import { BookPage } from './pages/BookPage';
+import { CalendarPage } from './pages/CalendarPage';
+import { ConfirmationPage } from './pages/ConfirmationPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
-/** Placeholder until the calendar (FR-2) lands: shows that the web app can reach the API. */
-export function App() {
-  const [health, setHealth] = useState<HealthResponse | 'unreachable' | null>(null);
-
-  useEffect(() => {
-    fetch('/api/health')
-      .then((res) => res.json() as Promise<HealthResponse>)
-      .then(setHealth)
-      .catch(() => setHealth('unreachable'));
-  }, []);
-
-  const status =
-    health === null ? 'Checking the API…' : health === 'unreachable' ? 'The API is not reachable.' : `API ${health.status}, database ${health.database}.`;
-
+function Layout() {
   return (
-    <main className="container">
-      <h1 className="hero">SlotBook</h1>
-      <p className="lede">Book time with me in a few clicks.</p>
-      <p className="muted" role="status">
-        {status}
-      </p>
-    </main>
+    <>
+      <a href="#main" className="skip-link">
+        Skip to content
+      </a>
+      <SiteHeader />
+      <main id="main" className="container">
+        <Outlet />
+      </main>
+    </>
+  );
+}
+
+export function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index element={<CalendarPage />} />
+          <Route path="book/:slotId" element={<BookPage />} />
+          <Route path="confirmation/:ref" element={<ConfirmationPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }

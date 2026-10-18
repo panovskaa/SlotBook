@@ -70,26 +70,6 @@ body {
   padding: var(--space-12) var(--gutter);
 }
 
-.hero {
-  font-size: var(--text-hero);
-  font-weight: 700;
-  line-height: 1.02;
-  letter-spacing: -0.03em;
-  margin: 0 0 var(--space-3);
-}
-
-.lede {
-  font-size: 1.25rem;
-  color: var(--text-secondary);
-  max-width: 36ch;
-  margin: 0 0 var(--space-4);
-}
-
-.muted {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-}
-
 :focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
