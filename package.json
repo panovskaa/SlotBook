@@ -1,0 +1,26 @@
+{
+  "name": "slotbook",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @slotbook/shared && npm run build -w @slotbook/api && npm run build -w @slotbook/web",
+    "dev": "npm run build -w @slotbook/shared && concurrently -n api,web -c blue,magenta \"npm run dev -w @slotbook/api\" \"npm run dev -w @slotbook/web\"",
+    "seed": "npm run seed -w @slotbook/api",
+    "test": "npm run build -w @slotbook/shared && npm run test --workspaces --if-present",
+    "postinstall": "npm run build -w @slotbook/shared"
+  },
+  "devDependencies": {
+    "concurrently": "9.2.5",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "prisma": {
+    "schema": "apps/api/prisma/schema.prisma",
+    "seed": "npm run seed -w @slotbook/api"
+  }
+}

@@ -1,0 +1,72 @@
+// SlotBook data model (SRS 4.3).
+// Constraints Prisma can't express (the overlap exclusion constraint, the CHECK and
+// the partial unique index) are added by a raw SQL migration.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SlotStatus {
+  AVAILABLE
+  BOOKED
+  DELETED
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+enum WaitlistStatus {
+  WAITING
+  NOTIFIED
+  EXPIRED
+}
+
+model Slot {
+  id        String     @id @default(uuid()) @db.Uuid
+  startsAt  DateTime   @map("starts_at") @db.Timestamptz(3)
+  endsAt    DateTime   @map("ends_at") @db.Timestamptz(3)
+  status    SlotStatus @default(AVAILABLE)
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  bookings  Booking[]
+
+  @@index([startsAt])
+  @@map("slot")
+}
+
+model Booking {
+  id              String        @id @default(uuid()) @db.Uuid
+  slotId          String        @map("slot_id") @db.Uuid
+  slot            Slot          @relation(fields: [slotId], references: [id])
+  name            String
+  email           String
+  reference       String        @unique
+  cancelTokenHash String        @unique @map("cancel_token_hash")
+  status          BookingStatus @default(CONFIRMED)
+  aiMessage       String?       @map("ai_message")
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+  cancelledAt     DateTime?     @map("cancelled_at") @db.Timestamptz(3)
+
+  @@index([slotId])
+  @@map("booking")
+}
+
+model WaitlistEntry {
+  id         String         @id @default(uuid()) @db.Uuid
+  date       DateTime       @db.Date
+  name       String
+  email      String
+  tokenHash  String         @unique @map("token_hash")
+  status     WaitlistStatus @default(WAITING)
+  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  notifiedAt DateTime?      @map("notified_at") @db.Timestamptz(3)
+
+  @@unique([date, email])
+  @@map("waitlist_entry")
+}
