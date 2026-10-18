@@ -63,6 +63,14 @@ function makeApi(overrides: Partial<Record<keyof HostApi, unknown>> = {}): HostA
   return {
     stats: vi.fn().mockResolvedValue(stats),
     bookings: vi.fn().mockResolvedValue(bookings),
+    insights: vi.fn().mockResolvedValue({
+      timezone: TZ,
+      totalBookings: 0,
+      hourRange: null,
+      heatmap: [],
+      topSlots: [],
+      weekdayRates: [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ weekday, booked: 0, published: 0, rate: null })),
+    }),
     createSlot: vi.fn(),
     deleteSlot: vi.fn().mockResolvedValue(null),
     ...overrides,

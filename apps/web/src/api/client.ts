@@ -7,6 +7,7 @@ import type {
   CreateSlotRequest,
   HostBookingsResponse,
   HostStatsResponse,
+  InsightsResponse,
   JoinWaitlistRequest,
   JoinWaitlistResponse,
   ManageBookingResponse,
@@ -68,6 +69,7 @@ export function hostApi(key: string) {
   return {
     stats: (signal?: AbortSignal) => request<HostStatsResponse>('/host/stats', { headers, signal }),
     bookings: (signal?: AbortSignal) => request<HostBookingsResponse>('/host/bookings', { headers, signal }),
+    insights: (signal?: AbortSignal) => request<InsightsResponse>('/host/insights', { headers, signal }),
     createSlot: (body: CreateSlotRequest) =>
       request<SlotDto>('/host/slots', { method: 'POST', headers, body: JSON.stringify(body) }),
     deleteSlot: (id: string) => request<null>(`/host/slots/${encodeURIComponent(id)}`, { method: 'DELETE', headers }),

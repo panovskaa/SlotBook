@@ -135,6 +135,41 @@ export interface HostBookingsResponse {
   bookings: HostBookingDto[];
 }
 
+/** ISO weekday: 1 = Monday … 7 = Sunday, in the app's time zone. */
+export type IsoWeekday = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+export interface HeatmapCell {
+  weekday: IsoWeekday;
+  /** 0–23, local hour the slot starts in */
+  hour: number;
+  bookings: number;
+}
+
+export interface TopSlot {
+  weekday: IsoWeekday;
+  /** Local start time, HH:mm */
+  time: string;
+  bookings: number;
+}
+
+export interface WeekdayRate extends BookingRate {
+  weekday: IsoWeekday;
+}
+
+/** GET /host/insights (FR-10). All counts are confirmed bookings, all time, grouped in the app's time zone. */
+export interface InsightsResponse {
+  timezone: string;
+  totalBookings: number;
+  /** First and last local hour that has any slot, to size the heatmap; null when nothing is published. */
+  hourRange: { from: number; to: number } | null;
+  /** Only cells with at least one booking; every other weekday/hour is zero. */
+  heatmap: HeatmapCell[];
+  /** Up to three weekday-and-start-time combinations with the most bookings */
+  topSlots: TopSlot[];
+  /** Always seven entries, Monday first */
+  weekdayRates: WeekdayRate[];
+}
+
 export type WaitlistStatus = 'WAITING' | 'NOTIFIED' | 'EXPIRED';
 
 /** POST /waitlist (FR-9) */

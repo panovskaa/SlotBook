@@ -79,7 +79,7 @@ export class HostService {
   }
 }
 
-function rate(booked: bigint, published: bigint): BookingRate {
+export function rate(booked: bigint | number, published: bigint | number): BookingRate {
   const b = Number(booked);
   const p = Number(published);
   return { booked: b, published: p, rate: p === 0 ? null : b / p };

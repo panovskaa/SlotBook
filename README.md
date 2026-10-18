@@ -19,7 +19,8 @@ The full requirements are in [SRS.md](SRS.md) and the visual design system in [D
 | FR-7 Cancel through the private link | Done: `/manage/:token` page, `GET /manage/:token`, `POST /manage/:token/cancel`, 60-minute cutoff |
 | FR-8 Host dashboard | Done: `/host` with stats, upcoming bookings, adding slots and deleting free ones |
 | FR-9 Waitlist | Done: join from a fully booked day, private status link, `slot.available` listener, "A slot opened up!" in the calendar |
-| FR-10, Swagger, rate limiting, E2E (Playwright), axe checks, CI | Not started |
+| FR-10 Insights | Done: heatmap by weekday and hour with a data table, top 3 times, booking rate per weekday (on the dashboard) |
+| Gemini message (FR-11), Swagger, rate limiting, E2E (Playwright), axe checks, CI | Not started |
 
 ## Requirements
 
@@ -79,6 +80,7 @@ curl localhost:3000/bookings/ref/K7M2-QX9P
 # Host only: dashboard numbers, upcoming bookings, delete a free slot
 curl localhost:3000/host/stats -H "X-Host-Key: $HOST_ACCESS_KEY"
 curl localhost:3000/host/bookings -H "X-Host-Key: $HOST_ACCESS_KEY"
+curl localhost:3000/host/insights -H "X-Host-Key: $HOST_ACCESS_KEY"
 curl -X DELETE localhost:3000/host/slots/<slot id> -H "X-Host-Key: $HOST_ACCESS_KEY"
 
 # Join a date's waitlist, then check it with the token from the response
@@ -140,6 +142,13 @@ packages/shared  Rules, error codes and API types used by both
   - **No missed openings.** Joining re-checks availability after inserting the entry. If a slot opened in between, the entry is marked `NOTIFIED` at once.
   - **Expiry.** Entries turn `EXPIRED` once their date has passed in the app's time zone. This happens the next time the status link is opened; there's no background job.
   - **Calendar badge.** A day shows "A slot opened up!" while it has a notified entry and a slot is still free.
+- **How insights are counted.**
+  - **What counts.** Confirmed bookings, all time. Cancelled bookings and deleted slots never count.
+  - **Time zone.** Everything is grouped in SQL in `APP_TIMEZONE` (`starts_at AT TIME ZONE …`), so a 23:30 UTC slot counts on the next local day and summer time is handled.
+  - **Weekdays.** Weekdays use `ISODOW` (Monday = 1 … Sunday = 7) instead of the SRS's `DOW` (Sunday = 0), to match the Monday-first calendar.
+  - **Top 3.** The "top 3 time slots" are weekday-and-start-time pairs (such as "Monday 10:00"), with ties broken by weekday, then time. The heatmap groups by hour, so 10:00 and 10:30 share a cell.
+  - **Consistency.** The four queries run in one repeatable-read transaction, so their numbers agree.
+- **Heatmap colours and accessibility.** One blue hue, lighter to darker, with empty hours left on the surface colour. The picture is hidden from screen readers. A data table with the same numbers is always in the page for them, and "Show as table" shows it on screen.
 - **Extra error codes.** FR-9 gives status codes but no error codes, so the waitlist adds `ALREADY_ON_WAITLIST` (409) and `DATE_HAS_AVAILABILITY` (422).
 - **Extra endpoint.** `GET /slots/:id` isn't in the SRS list. The booking page needs it to load its slot when someone opens a `/book/:slotId` link directly.
 - **"This week" before the first response.** The browser doesn't know the app's time zone until the first slot list arrives, so it uses its own zone to pick the opening week. This only matters around midnight on Sunday.

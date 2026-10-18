@@ -4,6 +4,7 @@ import { ErrorState, LoadingState } from '../components/States';
 import { getAppTimezone, rememberAppTimezone } from '../lib/timezone';
 import { useApi } from '../lib/useApi';
 import { CreateSlotForm } from './CreateSlotForm';
+import { Insights } from './Insights';
 import { SlotList } from './SlotList';
 import { StatTiles } from './StatTiles';
 import { UpcomingBookings } from './UpcomingBookings';
@@ -22,8 +23,9 @@ export function Dashboard({ api, onLock, onUnauthorized }: Props) {
   const [announcement, setAnnouncement] = useState('');
   const stats = useApi((signal) => api.stats(signal), `stats-${version}`);
   const bookings = useApi((signal) => api.bookings(signal), `bookings-${version}`);
+  const insights = useApi((signal) => api.insights(signal), `insights-${version}`);
 
-  const unauthorized = [stats, bookings].some((r) => r.status === 'error' && r.error.status === 401);
+  const unauthorized = [stats, bookings, insights].some((r) => r.status === 'error' && r.error.status === 401);
   useEffect(() => {
     if (unauthorized) onUnauthorized();
   }, [unauthorized, onUnauthorized]);
@@ -82,6 +84,17 @@ export function Dashboard({ api, onLock, onUnauthorized }: Props) {
           {bookings.status === 'ready' && <UpcomingBookings bookings={bookings.data.bookings} timezone={timezone} />}
         </section>
       </div>
+
+      <section aria-labelledby="insights-heading" className="card dashboard__section">
+        <h2 id="insights-heading" className="card__title">
+          Insights
+        </h2>
+        {insights.status === 'loading' && <LoadingState label="Loading insights…" />}
+        {insights.status === 'error' && insights.error.status !== 401 && (
+          <ErrorState title="We couldn't load the insights." onRetry={insights.retry} />
+        )}
+        {insights.status === 'ready' && <Insights data={insights.data} />}
+      </section>
 
       <section aria-labelledby="slots-heading" className="card dashboard__section">
         <h2 id="slots-heading" className="card__title">
