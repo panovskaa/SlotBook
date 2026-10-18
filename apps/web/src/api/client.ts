@@ -7,7 +7,10 @@ import type {
   CreateSlotRequest,
   HostBookingsResponse,
   HostStatsResponse,
+  JoinWaitlistRequest,
+  JoinWaitlistResponse,
   ManageBookingResponse,
+  WaitlistStatusResponse,
   SlotDto,
   SlotResponse,
   SlotsResponse,
@@ -53,6 +56,10 @@ export const api = {
     request<ManageBookingResponse>(`/manage/${encodeURIComponent(token)}`, { signal }),
   cancel: (token: string) =>
     request<CancelBookingResponse>(`/manage/${encodeURIComponent(token)}/cancel`, { method: 'POST' }),
+  joinWaitlist: (body: JoinWaitlistRequest) =>
+    request<JoinWaitlistResponse>('/waitlist', { method: 'POST', body: JSON.stringify(body) }),
+  waitlistStatus: (token: string, signal?: AbortSignal) =>
+    request<WaitlistStatusResponse>(`/waitlist/${encodeURIComponent(token)}`, { signal }),
 };
 
 /** Host routes (FR-8). Each call carries the host key in X-Host-Key. */

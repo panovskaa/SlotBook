@@ -7,6 +7,10 @@ export const ErrorCode = {
   CANCELLATION_CUTOFF: 'CANCELLATION_CUTOFF',
   NOT_FOUND: 'NOT_FOUND',
   UNAUTHORIZED: 'UNAUTHORIZED',
+  /** Not in the SRS list: FR-9's 409, this email is already waiting for that date. */
+  ALREADY_ON_WAITLIST: 'ALREADY_ON_WAITLIST',
+  /** Not in the SRS list: FR-9's 422, the date still has slots to book, so there's nothing to wait for. */
+  DATE_HAS_AVAILABILITY: 'DATE_HAS_AVAILABILITY',
   /** Not in the SRS list: only for unexpected server errors, which should never happen. */
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;

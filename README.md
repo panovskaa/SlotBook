@@ -18,7 +18,8 @@ The full requirements are in [SRS.md](SRS.md) and the visual design system in [D
 | `/health`, error format, request-ID logs, host key, Helmet, CORS | Done |
 | FR-7 Cancel through the private link | Done: `/manage/:token` page, `GET /manage/:token`, `POST /manage/:token/cancel`, 60-minute cutoff |
 | FR-8 Host dashboard | Done: `/host` with stats, upcoming bookings, adding slots and deleting free ones |
-| FR-9, FR-10, Swagger, rate limiting, E2E (Playwright), axe checks, CI | Not started |
+| FR-9 Waitlist | Done: join from a fully booked day, private status link, `slot.available` listener, "A slot opened up!" in the calendar |
+| FR-10, Swagger, rate limiting, E2E (Playwright), axe checks, CI | Not started |
 
 ## Requirements
 
@@ -80,6 +81,11 @@ curl localhost:3000/host/stats -H "X-Host-Key: $HOST_ACCESS_KEY"
 curl localhost:3000/host/bookings -H "X-Host-Key: $HOST_ACCESS_KEY"
 curl -X DELETE localhost:3000/host/slots/<slot id> -H "X-Host-Key: $HOST_ACCESS_KEY"
 
+# Join a date's waitlist, then check it with the token from the response
+curl -X POST localhost:3000/waitlist -H "Content-Type: application/json" \
+  -d '{"date":"2026-11-03","name":"Ada Lovelace","email":"ada@example.com"}'
+curl localhost:3000/waitlist/<token>
+
 # View or cancel a booking with the token from its private link
 curl localhost:3000/manage/<token>
 curl -X POST localhost:3000/manage/<token>/cancel
@@ -104,6 +110,9 @@ that container.
 
 - **`npm run build` fails with `EPERM … query_engine-windows.dll.node` on Windows.** A running
   `npm run dev` holds Prisma's engine file open. Stop the dev server, then build again.
+- **A page goes blank during development with "X is not defined" in the console.** Vite's file
+  watcher sometimes misses a save on Windows and keeps serving an old copy. Save the file again (or
+  restart `npm run dev`).
 
 ## Project layout
 
@@ -125,6 +134,13 @@ packages/shared  Rules, error codes and API types used by both
 - **What the dashboard numbers mean.** *Published* is every slot that isn't deleted, past and future. *Upcoming bookings* are confirmed bookings whose slot hasn't started. *Open slots* are ones a visitor could book right now (available and more than 30 minutes away). The *booking rate* is booked ÷ published: "last 30 days" covers slots that started in the last 30 days, and "all time" covers every slot that isn't deleted. With nothing published, the rate shows "—" instead of 0 %. All the numbers come from one SQL query, so they describe the same moment.
 - **Deleting slots.** Deleting is a soft delete (status `DELETED`), so history stays intact. Only free slots that haven't started can be deleted. Delete and booking use the same guarded update, so if both happen at once, exactly one wins (tested 20 times over).
 - **New slots notify the waitlist.** Creating a bookable slot emits `slot.available`, as a cancellation does, ready for FR-9.
+- **How the waitlist works.**
+  - **Who can join.** You can join for any date that hasn't passed and has nothing bookable: every slot is booked or inside the 30-minute cutoff, or the date has no slots yet. The calendar offers it on days where every slot is taken.
+  - **Notifying.** Cancellations and new slots emit `slot.available`. The listener marks that date's waiting entries `NOTIFIED` and "emails" each person through a development mailer that writes to the server log (A4). The event is awaited, so the waitlist is up to date before the cancel or create response returns. A failed notification is logged and never undoes the cancellation.
+  - **No missed openings.** Joining re-checks availability after inserting the entry. If a slot opened in between, the entry is marked `NOTIFIED` at once.
+  - **Expiry.** Entries turn `EXPIRED` once their date has passed in the app's time zone. This happens the next time the status link is opened; there's no background job.
+  - **Calendar badge.** A day shows "A slot opened up!" while it has a notified entry and a slot is still free.
+- **Extra error codes.** FR-9 gives status codes but no error codes, so the waitlist adds `ALREADY_ON_WAITLIST` (409) and `DATE_HAS_AVAILABILITY` (422).
 - **Extra endpoint.** `GET /slots/:id` isn't in the SRS list. The booking page needs it to load its slot when someone opens a `/book/:slotId` link directly.
 - **"This week" before the first response.** The browser doesn't know the app's time zone until the first slot list arrives, so it uses its own zone to pick the opening week. This only matters around midnight on Sunday.
 - **The private link is shown once.** It exists only in the booking response. Reloading the confirmation page falls back to the public lookup and says the link was shown once.

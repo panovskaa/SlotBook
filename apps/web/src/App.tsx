@@ -4,6 +4,8 @@ import { BookPage } from './pages/BookPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { ConfirmationPage } from './pages/ConfirmationPage';
 import { HostPage } from './pages/HostPage';
+import { JoinWaitlistPage } from './pages/JoinWaitlistPage';
+import { WaitlistStatusPage } from './pages/WaitlistStatusPage';
 import { ManagePage } from './pages/ManagePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
@@ -31,6 +33,8 @@ export function App() {
           <Route path="confirmation/:ref" element={<ConfirmationPage />} />
           <Route path="manage/:token" element={<ManagePage />} />
           <Route path="host" element={<HostPage />} />
+          <Route path="join-waitlist/:date" element={<JoinWaitlistPage />} />
+          <Route path="waitlist/:token" element={<WaitlistStatusPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

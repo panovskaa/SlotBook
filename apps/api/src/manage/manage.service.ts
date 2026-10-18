@@ -72,7 +72,8 @@ export class ManageService {
 
     if (result.freed) {
       const event: SlotAvailableEvent = { slotId: booking.slotId, startsAt: booking.slot.startsAt };
-      this.events.emit(SLOT_AVAILABLE, event);
+      // FR-7 → FR-9: awaited, so the waitlist check has run before the cancel response is sent.
+      await this.events.emitAsync(SLOT_AVAILABLE, event);
     }
     return { ...this.toResponse(updated), alreadyCancelled: false, message: 'Your booking is cancelled.' };
   }

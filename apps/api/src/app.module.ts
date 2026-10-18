@@ -11,6 +11,7 @@ import { HostModule } from './host/host.module';
 import { ManageModule } from './manage/manage.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SlotsModule } from './slots/slots.module';
+import { WaitlistModule } from './waitlist/waitlist.module';
 
 /** Replaces the secret in /manage/:token and /waitlist/:token paths. */
 export function redactTokens(url: string | undefined): string | undefined {
@@ -54,6 +55,7 @@ export class AppModule {
         BookingsModule,
         ManageModule,
         HostModule,
+        WaitlistModule,
       ],
       controllers: [HealthController],
       providers: [{ provide: APP_CONFIG, useValue: config }, Clock, HostKeyGuard],

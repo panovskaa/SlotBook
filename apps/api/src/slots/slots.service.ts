@@ -12,7 +12,14 @@ import {
 } from '@slotbook/shared';
 import { AppException } from '../common/app-exception';
 import { Clock } from '../common/clock';
-import { startOfNextZonedDay, startOfZonedDay, zonedToUtc } from '../common/time';
+import {
+  dateColumn,
+  fromDateColumn,
+  startOfNextZonedDay,
+  startOfZonedDay,
+  zonedDateOf,
+  zonedToUtc,
+} from '../common/time';
 import { APP_CONFIG, AppConfig } from '../config';
 import { SLOT_AVAILABLE, SlotAvailableEvent } from '../events';
 import { PrismaService } from '../prisma/prisma.service';
@@ -60,7 +67,8 @@ export class SlotsService {
     const created = this.toDto(slot, now);
     // FR-9: a new slot is an opening for anyone waiting on that date.
     if (created.state === 'AVAILABLE') {
-      this.events.emit(SLOT_AVAILABLE, { slotId: slot.id, startsAt: slot.startsAt } satisfies SlotAvailableEvent);
+      // Awaited, so the waitlist is up to date by the time the host gets the response.
+      await this.events.emitAsync(SLOT_AVAILABLE, { slotId: slot.id, startsAt: slot.startsAt } satisfies SlotAvailableEvent);
     }
     return created;
   }
@@ -105,7 +113,20 @@ export class SlotsService {
       where: { status: { not: 'DELETED' }, startsAt: { gte: from, gt: now, lt: to } },
       orderBy: { startsAt: 'asc' },
     });
-    return { timezone, slots: slots.map((s) => this.toDto(s, now)) };
+    const dtos = slots.map((s) => this.toDto(s, now));
+
+    // FR-9: dates where the waitlist was told a slot opened up, while one is still free to book.
+    const notified = await this.prisma.waitlistEntry.findMany({
+      where: { status: 'NOTIFIED', date: { gte: dateColumn(query.from), lte: dateColumn(query.to) } },
+      distinct: ['date'],
+      select: { date: true },
+    });
+    const datesWithOpenSlots = new Set(
+      dtos.filter((s) => s.state === 'AVAILABLE').map((s) => zonedDateOf(new Date(s.startsAt), timezone)),
+    );
+    const openedUp = notified.map((n) => fromDateColumn(n.date)).filter((d) => datesWithOpenSlots.has(d));
+
+    return { timezone, slots: dtos, openedUp };
   }
 
   /** One slot, for the booking page. Deleted slots and slots that have started don't exist for visitors. */

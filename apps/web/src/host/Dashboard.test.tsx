@@ -56,6 +56,7 @@ const slots: SlotsResponse = {
     { id: 's-open', startsAt: '2030-01-08T08:00:00.000Z', endsAt: '2030-01-08T08:30:00.000Z', durationMinutes: 30, state: 'AVAILABLE' },
     { id: 's-booked', startsAt: '2030-01-08T09:00:00.000Z', endsAt: '2030-01-08T09:30:00.000Z', durationMinutes: 30, state: 'BOOKED' },
   ],
+  openedUp: [],
 };
 
 function makeApi(overrides: Partial<Record<keyof HostApi, unknown>> = {}): HostApi {
@@ -92,7 +93,7 @@ describe('Dashboard', () => {
   });
 
   it('shows empty states, and no rate rather than 0 %', async () => {
-    vi.mocked(publicApi.slots).mockResolvedValue({ timezone: TZ, slots: [] });
+    vi.mocked(publicApi.slots).mockResolvedValue({ timezone: TZ, slots: [], openedUp: [] });
     renderDashboard(makeApi({ stats: vi.fn().mockResolvedValue(emptyStats), bookings: vi.fn().mockResolvedValue({ timezone: TZ, bookings: [] }) }));
 
     expect(await screen.findByText('No upcoming bookings yet. They\'ll appear here as people book.')).toBeInTheDocument();

@@ -1,8 +1,9 @@
 import type { CreateBookingResponse } from '@slotbook/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { Icon } from '../components/Icon';
+import { PrivateLink } from '../components/PrivateLink';
 import { ErrorState, LoadingState } from '../components/States';
 import { formatLongDate, formatTime } from '../lib/format';
 import { getAppTimezone } from '../lib/timezone';
@@ -51,7 +52,10 @@ export function ConfirmationPage() {
           </div>
         </dl>
 
-        <ManageLink path={booking.managePath} />
+        <PrivateLink path={booking.managePath} label="Private cancellation link">
+          Use it to cancel, up to an hour before the start. Keep it safe: it's shown only once, and anyone with the link
+          can cancel.
+        </PrivateLink>
 
         <Link to="/" className="button button--secondary">
           Back to all times
@@ -61,43 +65,6 @@ export function ConfirmationPage() {
   }
 
   return <ConfirmationLookup reference={ref} timezone={timezone} headingRef={headingRef} />;
-}
-
-function ManageLink({ path }: { path: string }) {
-  const url = `${window.location.origin}${path}`;
-  const [copied, setCopied] = useState(false);
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      setCopied(false);
-    }
-  };
-
-  return (
-    <section className="manage" aria-labelledby="manage-heading">
-      <h2 id="manage-heading" className="manage__title">
-        Your private link
-      </h2>
-      <p className="manage__body">
-        Use it to cancel, up to an hour before the start. Keep it safe: it's shown only once, and anyone with the link can
-        cancel.
-      </p>
-      <div className="manage__row">
-        <input className="field__input manage__url" readOnly value={url} aria-label="Private cancellation link" onFocus={(e) => e.target.select()} />
-        <button type="button" className="button button--secondary" onClick={copy}>
-          <Icon name={copied ? 'check' : 'copy'} size={16} />
-          {copied ? 'Copied' : 'Copy link'}
-        </button>
-      </div>
-      <p className="visually-hidden" aria-live="polite">
-        {copied ? 'Link copied' : ''}
-      </p>
-    </section>
-  );
 }
 
 function ConfirmationLookup({

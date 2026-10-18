@@ -18,13 +18,23 @@ interface Props {
   onSubmit: (values: BookingFormValues) => Promise<SubmitProblem | null>;
   /** Where "Choose another time" goes when the slot can't be booked any more. */
   backTo: string;
+  /** The same name-and-email form also joins the waitlist (FR-9); these change its wording. */
+  submitLabel?: string;
+  submittingLabel?: string;
+  hint?: string;
 }
 
 /**
  * Name and email, checked as you go (NFR-3): inline messages tied to each field with
  * aria-describedby, aria-invalid on the field, and submit disabled until the form is valid.
  */
-export function BookingForm({ onSubmit, backTo }: Props) {
+export function BookingForm({
+  onSubmit,
+  backTo,
+  submitLabel = 'Book this time',
+  submittingLabel = 'Booking…',
+  hint = 'We only use your email for this booking.',
+}: Props) {
   const id = useId();
   const [problem, setProblem] = useState<SubmitProblem | null>(null);
   const {
@@ -108,16 +118,16 @@ export function BookingForm({ onSubmit, backTo }: Props) {
       <button type="submit" className="button button--primary button--large" disabled={!isValid || isSubmitting}>
         {isSubmitting ? (
           <>
-            <span className="spinner spinner--on-accent" aria-hidden="true" /> Booking…
+            <span className="spinner spinner--on-accent" aria-hidden="true" /> {submittingLabel}
           </>
         ) : (
-          'Book this time'
+          submitLabel
         )}
       </button>
       <p className="visually-hidden" aria-live="polite">
-        {isSubmitting ? 'Booking your time…' : ''}
+        {isSubmitting ? submittingLabel : ''}
       </p>
-      <p className="form__hint">We only use your email for this booking.</p>
+      <p className="form__hint">{hint}</p>
     </form>
   );
 }

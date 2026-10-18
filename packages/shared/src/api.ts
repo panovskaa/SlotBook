@@ -26,6 +26,8 @@ export interface SlotDto {
 export interface SlotsResponse {
   timezone: string;
   slots: SlotDto[];
+  /** Dates (YYYY-MM-DD) where someone on the waitlist was told a slot opened up and one is still free (FR-9). */
+  openedUp: string[];
 }
 
 /** GET /slots/:id */
@@ -131,6 +133,38 @@ export interface HostBookingDto {
 export interface HostBookingsResponse {
   timezone: string;
   bookings: HostBookingDto[];
+}
+
+export type WaitlistStatus = 'WAITING' | 'NOTIFIED' | 'EXPIRED';
+
+/** POST /waitlist (FR-9) */
+export interface JoinWaitlistRequest {
+  /** YYYY-MM-DD in the app's time zone */
+  date: string;
+  name: string;
+  email: string;
+}
+
+/** Returned once. The status token is never shown again. */
+export interface JoinWaitlistResponse {
+  date: string;
+  status: WaitlistStatus;
+  statusToken: string;
+  /** e.g. /waitlist/abc… */
+  statusPath: string;
+}
+
+/** GET /waitlist/:token — only the link holder sees this. */
+export interface WaitlistStatusResponse {
+  timezone: string;
+  date: string;
+  name: string;
+  status: WaitlistStatus;
+  /** ISO 8601, UTC */
+  createdAt: string;
+  notifiedAt: string | null;
+  /** Slots on that date that can be booked right now, so the visitor can go straight to one. */
+  availableSlots: SlotDto[];
 }
 
 export interface HealthResponse {

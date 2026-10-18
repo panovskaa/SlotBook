@@ -93,6 +93,7 @@ export function CalendarPage() {
               slots={result.data.slots}
               timezone={result.data.timezone}
               today={DateTime.now().setZone(result.data.timezone).toISODate()!}
+              openedUp={result.data.openedUp}
             />
           ))}
       </section>
