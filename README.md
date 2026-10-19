@@ -70,12 +70,6 @@ is in [DESIGN.md](DESIGN.md).
 
 ## What I would improve with more time
 
-- **A real email provider** with its own sending domain, so emails don't land in spam.
+- **Rescheduling**: move a booking to another time from the private link, instead of cancelling and booking again.
 - **Email the waitlist** when a slot opens, instead of only showing it on the waitlist's status page.
-- **Calendar invites**: attach an `.ics` file to the confirmation email, and allow rescheduling, not
-  just cancelling.
-- **Proper host accounts** with sign-in instead of one shared access key, and support for more than
-  one host.
-- **Show times in the visitor's own time zone** as well as the host's.
-- **A manual accessibility pass** with a keyboard and a screen reader, plus screenshot comparison
-  tests, on top of the automated axe checks.
+- **Calendar invites**, so a booking lands straight in the visitor's calendar.
