@@ -12,7 +12,13 @@ export default defineConfig({
   server: {
     port: 5173,
     // The browser calls /api/...; Vite forwards it to the NestJS API without the /api prefix.
-    proxy: { '/api': { target: 'http://localhost:3000', rewrite: (path) => path.replace(/^\/api/, '') } },
+    // API_PROXY_TARGET lets the E2E run point at its own API instance.
+    proxy: {
+      '/api': {
+        target: process.env.API_PROXY_TARGET ?? 'http://localhost:3000',
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
   },
   test: {
     environment: 'jsdom',

@@ -30,13 +30,18 @@ export interface TestApp {
 }
 
 /** Boots the real app (same pipes, filter and guards as main.ts) against the test database. */
-export async function createTestApp(now: string, options: { llm?: LlmClient } = {}): Promise<TestApp> {
+export async function createTestApp(
+  now: string,
+  options: { llm?: LlmClient; rateLimit?: AppConfig['rateLimit'] } = {},
+): Promise<TestApp> {
   const config: AppConfig = {
     databaseUrl: process.env.DATABASE_URL!,
     hostAccessKey: HOST_KEY,
     timezone: TIMEZONE,
     webOrigin: 'http://localhost:5173',
     port: 0,
+    // High by default so the concurrency tests aren't throttled; the rate-limit test sets its own.
+    rateLimit: options.rateLimit ?? { limit: 100_000, windowMs: 60_000 },
   };
   const clock = new FakeClock(new Date(now));
   const moduleRef = await Test.createTestingModule({

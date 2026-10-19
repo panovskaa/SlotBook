@@ -71,7 +71,7 @@ describe('Waitlist status page', () => {
     });
     renderAt(`/waitlist/${TOKEN}`);
     expect(await screen.findByRole('heading', { name: 'A slot opened up!' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Book 10:00 to 10:30, Tuesday 3 November' })).toHaveAttribute('href', '/book/s1');
+    expect(screen.getByRole('link', { name: /^Book 10:00 to 10:30, Tuesday 3 November/ })).toHaveAttribute('href', '/book/s1');
   });
 
   it('explains when the opened slot has been taken again', async () => {

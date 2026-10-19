@@ -97,9 +97,9 @@ export function SlotList({ api, timezone, version, bookings, onDeleted, onUnauth
                               className="button button--danger-solid button--small"
                               onClick={() => remove(s)}
                               disabled={deleting === s.id}
-                              aria-label={`Confirm deleting ${time}`}
                             >
                               {deleting === s.id ? 'Deleting…' : 'Delete'}
+                              <span className="visually-hidden"> {time} now</span>
                             </button>
                             <button
                               type="button"

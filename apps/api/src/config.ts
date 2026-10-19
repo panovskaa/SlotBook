@@ -9,6 +9,8 @@ export interface AppConfig {
   geminiApiKey?: string;
   /** Free-tier Gemini model for confirmation messages (FR-11). */
   geminiModel?: string;
+  /** NFR-4: requests per window, per IP, for each public write endpoint. */
+  rateLimit: { limit: number; windowMs: number };
 }
 
 export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash-lite';
@@ -36,5 +38,16 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     port: Number(env.PORT ?? 3000),
     geminiApiKey: env.GEMINI_API_KEY || undefined,
     geminiModel: env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+    rateLimit: {
+      limit: positiveInt(env.RATE_LIMIT_MAX, 10, 'RATE_LIMIT_MAX'),
+      windowMs: positiveInt(env.RATE_LIMIT_WINDOW_SECONDS, 60, 'RATE_LIMIT_WINDOW_SECONDS') * 1000,
+    },
   };
+}
+
+function positiveInt(value: string | undefined, fallback: number, name: string): number {
+  if (value === undefined || value === '') return fallback;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 1) throw new Error(`${name} must be a positive whole number`);
+  return n;
 }

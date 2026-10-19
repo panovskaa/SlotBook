@@ -27,13 +27,21 @@ export function SlotCell({ slot, timezone }: { slot: SlotDto; timezone: string }
   );
 
   if (slot.state === 'AVAILABLE') {
+    // The name comes from the content, so it always includes the visible text (WCAG 2.5.3);
+    // the hidden parts add what sighted users get from the column heading.
     return (
-      <Link
-        to={`/book/${slot.id}`}
-        className="slot slot--available"
-        aria-label={`Book ${start} to ${end}, ${formatLongDate(slot.startsAt, timezone)}`}
-      >
-        {content}
+      <Link to={`/book/${slot.id}`} className="slot slot--available">
+        <span className="visually-hidden">Book </span>
+        <span className="slot__time">{start}</span>
+        <span className="visually-hidden">
+          {' '}
+          to {end}, {formatLongDate(slot.startsAt, timezone)},{' '}
+        </span>
+        <span className="slot__meta">{formatDuration(slot.durationMinutes)}</span>
+        <span className="slot__state">
+          <Icon name="check" size={14} />
+          {label}
+        </span>
       </Link>
     );
   }

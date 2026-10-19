@@ -31,7 +31,7 @@
 }
 
 a {
-  color: var(--accent);
+  color: var(--accent-text);
   text-underline-offset: 2px;
 }
 
@@ -286,12 +286,12 @@ a {
   letter-spacing: -0.01em;
 }
 .day--today .day__date {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .day__today {
   font-size: 0.75rem;
   font-weight: 500;
-  color: var(--accent);
+  color: var(--accent-text);
   background: var(--accent-subtle);
   padding: 1px 8px;
   border-radius: var(--radius-pill);
@@ -380,7 +380,7 @@ a {
     transform 120ms ease;
 }
 .slot--available .slot__state {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .slot--available:hover {
   background: var(--accent-subtle);
@@ -700,13 +700,13 @@ a {
   color: var(--success);
 }
 .badge--cancelled {
-  background: var(--bg-tertiary);
+  background: var(--bg-secondary);
   color: var(--text-secondary);
 }
 
 .badge--available {
   background: var(--accent-subtle);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 .badge--booked {
   background: var(--success-bg);
@@ -1068,7 +1068,7 @@ select.field__input {
   display: grid;
   place-items: center;
   background: var(--accent-subtle);
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 600;
   font-size: 0.875rem;
 }

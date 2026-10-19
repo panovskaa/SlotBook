@@ -137,7 +137,7 @@ describe('Dashboard', () => {
 
     await userEvent.click(deleteButtons[0]);
     expect(api.deleteSlot).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole('button', { name: 'Confirm deleting 09:00 – 09:30' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Delete 09:00 – 09:30 now' }));
 
     expect(api.deleteSlot).toHaveBeenCalledWith('s-open');
     // Everything reloads after the change.
@@ -150,7 +150,7 @@ describe('Dashboard', () => {
     });
     renderDashboard(api);
     await userEvent.click((await screen.findAllByRole('button', { name: /^Delete / }))[0]);
-    await userEvent.click(screen.getByRole('button', { name: 'Confirm deleting 09:00 – 09:30' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Delete 09:00 – 09:30 now' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Someone has just booked this slot');
   });
 

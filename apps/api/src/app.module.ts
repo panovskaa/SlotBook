@@ -1,5 +1,6 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { randomUUID } from 'crypto';
 import { LoggerModule } from 'nestjs-pino';
 import { BookingsModule } from './bookings/bookings.module';
@@ -50,6 +51,8 @@ export class AppModule {
           },
         }),
         EventEmitterModule.forRoot(),
+        // NFR-4: in-memory counters, applied only where @UseGuards(ThrottlerGuard) appears.
+        ThrottlerModule.forRoot({ throttlers: [{ ttl: config.rateLimit.windowMs, limit: config.rateLimit.limit }] }),
         PrismaModule,
         SlotsModule,
         BookingsModule,

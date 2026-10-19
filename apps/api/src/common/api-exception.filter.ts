@@ -22,6 +22,10 @@ export class ApiExceptionFilter implements ExceptionFilter {
       if (typeof response === 'object' && response !== null && 'code' in response) {
         return response as ApiError;
       }
+      if (status === HttpStatus.TOO_MANY_REQUESTS) {
+        // NFR-4. The throttler has already set a Retry-After header.
+        return { statusCode: status, code: ErrorCode.RATE_LIMITED, message: 'Too many requests. Please wait a minute and try again.' };
+      }
       return { statusCode: status, code: codeForStatus(status), message: exception.message };
     }
 

@@ -57,13 +57,14 @@ export function WaitlistStatusPage() {
           <ul className="open-slots">
             {open.map((s) => (
               <li key={s.id}>
-                <Link
-                  to={`/book/${s.id}`}
-                  className="slot slot--available open-slots__slot"
-                  aria-label={`Book ${formatTime(s.startsAt, entry.timezone)} to ${formatTime(s.endsAt, entry.timezone)}, ${dateLabel}`}
-                >
+                <Link to={`/book/${s.id}`} className="slot slot--available open-slots__slot">
                   <span className="slot__time">
-                    {formatTime(s.startsAt, entry.timezone)} – {formatTime(s.endsAt, entry.timezone)}
+                    <span aria-hidden="true">
+                      {formatTime(s.startsAt, entry.timezone)} – {formatTime(s.endsAt, entry.timezone)}
+                    </span>
+                    <span className="visually-hidden">
+                      Book {formatTime(s.startsAt, entry.timezone)} to {formatTime(s.endsAt, entry.timezone)}, {dateLabel},
+                    </span>
                   </span>
                   <span className="slot__meta">{formatDuration(s.durationMinutes)}</span>
                   <span className="slot__state">

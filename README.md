@@ -20,7 +20,12 @@ The full requirements are in [SRS.md](SRS.md) and the visual design system in [D
 | FR-8 Host dashboard | Done: `/host` with stats, upcoming bookings, adding slots and deleting free ones |
 | FR-9 Waitlist | Done: join from a fully booked day, private status link, `slot.available` listener, "A slot opened up!" in the calendar |
 | FR-10 Insights | Done: heatmap by weekday and hour with a data table, top 3 times, booking rate per weekday (on the dashboard) |
-| Swagger, rate limiting, E2E (Playwright), axe checks, CI | Not started |
+| NFR-1 Accessibility | axe (WCAG 2.1 A/AA) runs on every page the E2E tests visit; the ESLint `jsx-a11y` rule and a manual keyboard pass aren't done |
+| NFR-2 Mobile | E2E runs at desktop, Pixel 7 and iPhone SE sizes and checks for horizontal overflow; screenshot comparisons aren't done |
+| NFR-4 Rate limiting | Done: booking, cancelling and joining the waitlist, per IP and endpoint |
+| NFR-6 Performance | Not checked yet (autocannon, `EXPLAIN ANALYZE`) |
+| NFR-8 CI | GitHub Actions runs type checks, all tests and both builds; ESLint and Prettier aren't set up yet |
+| API docs | Swagger UI at http://localhost:3000/api/docs, raw OpenAPI at `/api/docs-json` |
 
 ## Requirements
 
@@ -56,6 +61,8 @@ the public pages.
 | `PORT` | No | API port. Default `3000`. |
 | `GEMINI_API_KEY` | No | Free-tier Gemini key for AI confirmation messages (FR-11), from https://aistudio.google.com/apikey. Without it, a template message is used. |
 | `GEMINI_MODEL` | No | Which Gemini model to use. Default `gemini-2.5-flash-lite` (free tier, fast). |
+| `RATE_LIMIT_MAX` | No | Requests allowed per window, per IP, for each of booking, cancelling and joining the waitlist. Default `10`. |
+| `RATE_LIMIT_WINDOW_SECONDS` | No | Length of that window. Default `60`. |
 
 ## Try the API
 
@@ -99,15 +106,30 @@ Every error has the shape `{ statusCode, code, message, details? }`.
 ## Tests
 
 ```bash
-npm test                                   # everything
+npm test                                   # unit, integration and web tests
 npm run test:unit -w @slotbook/api         # fast, no database
 npm run test:int -w @slotbook/api          # starts its own Postgres in Docker
 npm test -w @slotbook/web                  # Vitest + React Testing Library
+npm run test:e2e                           # Playwright + axe; needs `docker compose up -d`
 ```
 
 The integration tests start a throwaway Postgres container with Testcontainers and apply the real
 migrations, so they never touch your local database. They run one file at a time because they share
 that container.
+
+The end-to-end tests (`e2e/`) work like this:
+- **Setup.** They build the apps, then start their own API on port 3100 and web app on port 5174, against a separate `slotbook_e2e` database. That database is created and migrated in the Compose Postgres, so it's safe to run next to `npm run dev`.
+- **Coverage.** Every flow runs at desktop, Pixel 7 and iPhone SE sizes. Each page is checked with axe for WCAG 2.1 A/AA violations and for horizontal overflow.
+- **Browser.** First time only, run `npx playwright install chromium`. The iPhone SE run uses Chromium at the iPhone's size, so only one browser is needed.
+- **Report.** `npm run report -w @slotbook/e2e` opens the last report.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and pull request:
+- **`test` job (Node 20 and 22):** type-checks all three projects, runs the unit and integration tests (Testcontainers uses the runner's Docker) and the web tests, and builds both apps.
+- **`e2e` job:** runs the Playwright suite against a Postgres service container and uploads the HTML report if anything fails.
+
+To make CI a merge requirement, as NFR-8 asks, turn on branch protection for `master` in the GitHub repository settings.
 
 ## Troubleshooting
 
@@ -123,6 +145,8 @@ that container.
 apps/api         NestJS REST API, Prisma schema and migrations
 apps/web         React + Vite web app
 packages/shared  Rules, error codes and API types used by both
+e2e              Playwright end-to-end and accessibility tests
+.github          CI workflow
 ```
 
 ## Decisions worth knowing
@@ -158,7 +182,16 @@ packages/shared  Rules, error codes and API types used by both
   - **Bookings never fail because of it.** A slow Gemini delays the booking response by at most 3 seconds.
   - **Tests.** No test calls the real API. They use a fake client, and with no key configured there's no client at all.
   - **Free tier.** Google may use free-tier prompts to improve its products, which is another reason only a first name is sent.
-- **Extra error codes.** FR-9 gives status codes but no error codes, so the waitlist adds `ALREADY_ON_WAITLIST` (409) and `DATE_HAS_AVAILABILITY` (422).
+- **Colour contrast differs slightly from DESIGN.md.** axe found that some DESIGN.md text colours miss WCAG AA's 4.5:1 for small text, so `apps/web/src/styles/tokens.css` keeps the hues and darkens them just enough:
+  - muted text `#86868B` → `#6E6E73` (3.6:1 → 5.1:1)
+  - success `#248A3D` → `#217E38`
+  - warning `#9A6700` → `#956400`
+  - a new `--accent-text: #0062C4` for blue text and links on tinted backgrounds; buttons keep `#0071E3`
+
+  DESIGN.md itself still lists the old values.
+- **Rate limiting.** Uses in-memory counters (`@nestjs/throttler`), which is right for one API instance. Several instances behind a load balancer would need a shared store such as Redis, and `trust proxy` set so the real client IP is counted. A limited request gets 429 `RATE_LIMITED` with a `Retry-After` header.
+- **Swagger.** The `@nestjs/swagger` compiler plugin documents request bodies from the DTOs, validation rules included. Responses are shared TypeScript interfaces, which the plugin can't read, so each endpoint lists its status codes and error codes instead. Only the docs pages get a looser content security policy (Swagger UI needs inline styles).
+- **Extra error codes.** FR-9 gives status codes but no error codes, so the waitlist adds `ALREADY_ON_WAITLIST` (409) and `DATE_HAS_AVAILABILITY` (422). Rate limiting adds `RATE_LIMITED` (429).
 - **Extra endpoint.** `GET /slots/:id` isn't in the SRS list. The booking page needs it to load its slot when someone opens a `/book/:slotId` link directly.
 - **"This week" before the first response.** The browser doesn't know the app's time zone until the first slot list arrives, so it uses its own zone to pick the opening week. This only matters around midnight on Sunday.
 - **The private link is shown once.** It exists only in the booking response. Reloading the confirmation page falls back to the public lookup and says the link was shown once.

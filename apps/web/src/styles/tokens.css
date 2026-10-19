@@ -5,15 +5,19 @@
   --bg-tertiary: #ebebf0;
   --text: #1d1d1f;
   --text-secondary: #6e6e73;
-  --text-muted: #86868b;
+  /* DESIGN.md has #86868b, which is only 3.6:1 on white; this keeps the look and meets WCAG AA (4.5:1). */
+  --text-muted: #6e6e73;
   --border: #d2d2d7;
   --accent: #0071e3;
   --accent-hover: #0077ed;
   --accent-subtle: #eaf3ff;
+  /* Blue for text and links: #0071e3 drops below 4.5:1 on tinted backgrounds. Buttons keep --accent. */
+  --accent-text: #0062c4;
 
-  --success: #248a3d;
+  /* Same hues as DESIGN.md, darkened just enough for 4.5:1 text contrast on white and on their tints. */
+  --success: #217e38;
   --success-bg: #eaf6ec;
-  --warning: #9a6700;
+  --warning: #956400;
   --warning-bg: #fff4d6;
   --error: #d70015;
   --error-bg: #fff0f0;

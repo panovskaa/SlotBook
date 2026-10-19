@@ -41,7 +41,7 @@ describe('WeekCalendar', () => {
     const links = screen.getAllByRole('link');
     expect(links).toHaveLength(1);
     expect(links[0]).toHaveAttribute('href', '/book/a');
-    expect(links[0]).toHaveAccessibleName('Book 10:00 to 10:30, Tuesday 3 November');
+    expect(links[0]).toHaveAccessibleName(/Book 10:00 to 10:30, Tuesday 3 November, 30 min Available/);
   });
 
   it('shows times in the app time zone and on the right day', () => {
