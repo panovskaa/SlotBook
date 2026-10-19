@@ -202,7 +202,7 @@ To make CI a merge requirement, as NFR-8 asks, turn on branch protection for `ma
 | Database | [Neon](https://neon.com) free Postgres | Doesn't expire. Use the **direct** (not pooled) connection string as `DATABASE_URL`. |
 | API | [Render](https://render.com) free web service | Sleeps after 15 idle minutes; the first request after that takes 30 to 60 seconds. Runs `prisma migrate deploy` on every start. |
 | Web app | Render free static site | Never sleeps. All paths rewrite to `index.html`. |
-| Email | [Brevo](https://www.brevo.com) free SMTP | 300 emails a day. Verify one sender address. |
+| Email | [Brevo](https://www.brevo.com) free SMTP | 300 emails a day. Verify one sender address. Use port **2525** in `SMTP_URL`: Render's free services block ports 25, 465 and 587. |
 
 [`render.yaml`](../render.yaml) is a Render Blueprint that creates both Render services from this repo.
 Render asks for the secrets once (`DATABASE_URL`, `WEB_ORIGIN`, `SMTP_URL`, `MAIL_FROM`,
