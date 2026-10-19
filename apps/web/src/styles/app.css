@@ -1324,34 +1324,38 @@ html {
 
 /* Hero text: a one-line headline on wider screens, a wide intro, and the session facts in a row. */
 .hero-eyebrow {
-  margin: 0 0 var(--space-2);
-  padding: 4px 14px;
+  margin: 0 0 12px;
+  padding: 3px 12px;
   border-radius: var(--radius-pill);
   background: var(--accent-subtle);
   color: var(--accent-text);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 600;
 }
-/* Always one line: the headline is about 10x its font size wide, so it scales with the screen. */
+/*
+ * Always one line: the headline is about 10x its font size wide, so it scales with the screen width.
+ * It also scales with the height, so on a short laptop screen the text stays compact and the crowd
+ * below keeps enough room.
+ */
 .hero-title {
   max-width: none;
-  margin-bottom: var(--space-2);
+  margin-bottom: 12px;
   white-space: nowrap;
-  font-size: clamp(1.75rem, calc(9.6vw - 4px), 5.5rem);
+  font-size: clamp(1.75rem, min(calc(9.6vw - 4px), 7svh), 4rem);
 }
 .hero-lede {
   max-width: 62ch;
-  font-size: 1.1875rem;
+  font-size: 1.0625rem;
 }
 .hero-facts {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-1) var(--space-3);
-  margin: var(--space-3) 0 0;
+  margin: var(--space-2) 0 0;
   padding: 0;
   list-style: none;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   color: var(--text-secondary);
 }
 .hero-facts li {
@@ -1368,11 +1372,11 @@ html {
 }
 @media (max-width: 767px) {
   .hero-lede {
-    font-size: 1.0625rem;
+    font-size: 1rem;
   }
   .hero-facts {
     gap: 6px var(--space-2);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
 }
 
