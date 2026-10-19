@@ -70,7 +70,7 @@ is in [DESIGN.md](DESIGN.md).
 
 ## What I would improve with more time
 
-- **Deploy it**, with a real email provider and a sending domain, so emails don't land in spam.
+- **A real email provider** with its own sending domain, so emails don't land in spam.
 - **Email the waitlist** when a slot opens, instead of only showing it on the waitlist's status page.
 - **Calendar invites**: attach an `.ics` file to the confirmation email, and allow rescheduling, not
   just cancelling.
