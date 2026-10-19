@@ -68,7 +68,6 @@ const slots: SlotsResponse = {
       state: 'BOOKED',
     },
   ],
-  openedUp: [],
 };
 
 function makeApi(overrides: Partial<Record<keyof HostApi, unknown>> = {}): HostApi {
@@ -113,7 +112,7 @@ describe('Dashboard', () => {
   });
 
   it('shows empty states, and no rate rather than 0 %', async () => {
-    vi.mocked(publicApi.slots).mockResolvedValue({ timezone: TZ, slots: [], openedUp: [] });
+    vi.mocked(publicApi.slots).mockResolvedValue({ timezone: TZ, slots: [] });
     renderDashboard(
       makeApi({
         stats: vi.fn().mockResolvedValue(emptyStats),

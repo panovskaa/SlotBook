@@ -7,7 +7,18 @@ import { ErrorState, LoadingState } from '../components/States';
 import { dayParts, formatDuration, formatTime } from '../lib/format';
 import { useApi } from '../lib/useApi';
 
-/** FR-9: the private waitlist status link. Shows when a slot opens and lets the visitor book it. */
+/** How each waitlist status is shown in the details list. */
+const BADGE = {
+  WAITING: { tone: 'unavailable', icon: 'clock', label: 'Waiting' },
+  NOTIFIED: { tone: 'available', icon: 'check', label: 'Slot opened up' },
+  BOOKED: { tone: 'available', icon: 'check', label: 'Booked for you' },
+  EXPIRED: { tone: 'cancelled', icon: 'clock', label: 'Closed' },
+} as const;
+
+/**
+ * FR-9: the private waitlist status link. Shows whether you're still waiting, or the slot that was
+ * booked for you when one freed up.
+ */
 export function WaitlistStatusPage() {
   const { token = '' } = useParams();
   const state = useLocation().state as { justJoined?: boolean; emailSent?: boolean } | null;
@@ -41,6 +52,7 @@ export function WaitlistStatusPage() {
   const { longWeekday, day, month } = dayParts(entry.date);
   const dateLabel = `${longWeekday} ${day} ${month}`;
   const open = entry.availableSlots;
+  const booked = entry.booking;
 
   return (
     <div className="narrow">
@@ -92,14 +104,40 @@ export function WaitlistStatusPage() {
         </>
       )}
 
+      {entry.status === 'BOOKED' && booked?.status === 'CONFIRMED' && (
+        <>
+          <div className="success-mark" aria-hidden="true">
+            <Icon name="check" size={28} />
+          </div>
+          <h1 className="page-title" tabIndex={-1} ref={headingRef}>
+            You got a slot!
+          </h1>
+          <p className="lede lede--tight">
+            A time opened up on {dateLabel} and you were first on the waitlist, so it's booked for you. The confirmation
+            email has your private link to cancel.
+          </p>
+        </>
+      )}
+
+      {entry.status === 'BOOKED' && booked?.status === 'CANCELLED' && (
+        <>
+          <h1 className="page-title" tabIndex={-1} ref={headingRef}>
+            Your waitlist booking was cancelled.
+          </h1>
+          <p className="lede lede--tight">
+            You got a slot on {dateLabel} from the waitlist, and it has since been cancelled.
+          </p>
+        </>
+      )}
+
       {entry.status === 'WAITING' && (
         <>
           <h1 className="page-title" tabIndex={-1} ref={headingRef}>
             {justJoined ? "You're on the waitlist." : 'Still waiting'}
           </h1>
           <p className="lede lede--tight">
-            {dateLabel} is fully booked. If a slot opens up, we'll email you a link to book it, and this page will show
-            it too.
+            {dateLabel} is fully booked. If a slot opens up and you're first in line, it's booked for you automatically,
+            and we'll email you the details.
           </p>
         </>
       )}
@@ -118,6 +156,20 @@ export function WaitlistStatusPage() {
           <dt>Date</dt>
           <dd>{dateLabel}</dd>
         </div>
+        {booked && (
+          <>
+            <div>
+              <dt>Your time</dt>
+              <dd>
+                {formatTime(booked.startsAt, entry.timezone)} – {formatTime(booked.endsAt, entry.timezone)}
+              </dd>
+            </div>
+            <div>
+              <dt>Booking reference</dt>
+              <dd className="reference">{booked.reference}</dd>
+            </div>
+          </>
+        )}
         <div>
           <dt>Name</dt>
           <dd>{entry.name}</dd>
@@ -125,11 +177,9 @@ export function WaitlistStatusPage() {
         <div>
           <dt>Status</dt>
           <dd>
-            <span
-              className={`badge badge--${entry.status === 'NOTIFIED' ? 'available' : entry.status === 'WAITING' ? 'unavailable' : 'cancelled'}`}
-            >
-              <Icon name={entry.status === 'NOTIFIED' ? 'check' : 'clock'} size={14} />
-              {entry.status === 'NOTIFIED' ? 'Slot opened up' : entry.status === 'WAITING' ? 'Waiting' : 'Closed'}
+            <span className={`badge badge--${BADGE[entry.status].tone}`}>
+              <Icon name={BADGE[entry.status].icon} size={14} />
+              {entry.status === 'BOOKED' && booked?.status === 'CANCELLED' ? 'Cancelled' : BADGE[entry.status].label}
             </span>
           </dd>
         </div>
@@ -145,7 +195,7 @@ export function WaitlistStatusPage() {
       )}
 
       <div className="actions-row">
-        {entry.status !== 'EXPIRED' && (
+        {(entry.status === 'WAITING' || entry.status === 'NOTIFIED') && (
           <button type="button" className="button button--secondary" onClick={result.retry}>
             Check again
           </button>

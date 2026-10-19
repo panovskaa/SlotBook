@@ -37,6 +37,21 @@ export class BookingsService {
 
   /** FR-3, FR-4: exactly one of any number of simultaneous requests for a slot succeeds. */
   async book(dto: CreateBookingDto): Promise<CreateBookingResponse> {
+    return (await this.create(dto, false)).response;
+  }
+
+  /**
+   * FR-9: books a freed slot for the first person on that day's waitlist. Same rules and guards as a
+   * visitor's booking (it can lose a race too); only the confirmation email reads differently.
+   */
+  bookFromWaitlist(entry: { slotId: string; name: string; email: string }) {
+    return this.create(entry, true);
+  }
+
+  private async create(
+    dto: Pick<CreateBookingDto, 'slotId' | 'name' | 'email'>,
+    fromWaitlist: boolean,
+  ): Promise<{ response: CreateBookingResponse; bookingId: string }> {
     for (let attempt = 1; ; attempt++) {
       const reference = this.references.next();
       const secret = createSecretToken();
@@ -48,9 +63,9 @@ export class BookingsService {
         // Both run after the commit and never fail the booking; they run side by side to keep it quick.
         const [message, emailSent] = await Promise.all([
           this.saveMessage(booking, slot),
-          this.emails.sendConfirmation(booking, slot, secret.token),
+          this.emails.sendConfirmation(booking, slot, secret.token, { fromWaitlist }),
         ]);
-        return {
+        const response: CreateBookingResponse = {
           reference: booking.reference,
           status: booking.status,
           slot: { startsAt: slot.startsAt.toISOString(), endsAt: slot.endsAt.toISOString() },
@@ -59,6 +74,7 @@ export class BookingsService {
           message,
           emailSent,
         };
+        return { response, bookingId: booking.id };
       } catch (err) {
         const target = uniqueViolationTarget(err);
         // The whole transaction rolled back, slot update included, so it's safe to start over.
@@ -71,7 +87,7 @@ export class BookingsService {
 
   private async bookInTransaction(
     tx: Prisma.TransactionClient,
-    dto: CreateBookingDto,
+    dto: Pick<CreateBookingDto, 'slotId' | 'name' | 'email'>,
     reference: string,
     cancelTokenHash: string,
   ): Promise<{ booking: Booking; slot: Slot }> {

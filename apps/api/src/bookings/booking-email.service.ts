@@ -14,45 +14,68 @@ export class BookingEmailService {
     private readonly mail: MailService,
   ) {}
 
-  /** Sends the confirmation. Returns whether it was handed to the mail server; never throws. */
-  sendConfirmation(booking: Booking, slot: Slot, manageToken: string): Promise<boolean> {
-    return this.mail.send(this.compose(booking, slot, manageToken), { bookingId: booking.id });
+  /**
+   * Sends the confirmation. Returns whether it was handed to the mail server; never throws.
+   * `fromWaitlist`: the slot freed up and was booked for this person because they were first in line.
+   */
+  sendConfirmation(
+    booking: Booking,
+    slot: Slot,
+    manageToken: string,
+    options: { fromWaitlist?: boolean } = {},
+  ): Promise<boolean> {
+    return this.mail.send(this.compose(booking, slot, manageToken, options), { bookingId: booking.id });
   }
 
-  compose(booking: Booking, slot: Slot, manageToken: string): MailMessage {
+  compose(booking: Booking, slot: Slot, manageToken: string, options: { fromWaitlist?: boolean } = {}): MailMessage {
     const when = `${formatSlotTime(this.config, slot.startsAt, slot.endsAt)} (${this.config.timezone})`;
     const start = DateTime.fromJSDate(slot.startsAt, { zone: this.config.timezone }).setLocale('en-GB');
+    const shortWhen = `${start.toFormat('ccc d LLL')} at ${start.toFormat('HH:mm')}`;
     const reference = booking.reference;
     const link = webLink(this.config, `/manage/${manageToken}`);
     const name = firstName(booking.name);
+    const cancelLine = options.fromWaitlist
+      ? "Can't make it after all? Cancel with your private link, up to an hour before the start, and the time goes to the next person waiting."
+      : 'Need to cancel? Use your private link, up to an hour before the start.';
+    const footer = 'Keep this email safe: anyone with the link can cancel the booking.';
 
-    const text = [
-      `Hi ${name},`,
-      '',
-      `You're booked for office hours on ${when}.`,
-      `Booking reference: ${reference}`,
-      '',
-      'Need to cancel? Use your private link, up to an hour before the start:',
-      link,
-      '',
-      'Keep this email safe: anyone with the link can cancel the booking.',
-    ].join('\n');
+    const intro = options.fromWaitlist
+      ? [
+          "A slot opened up, and it's yours!",
+          `You were first on the waitlist, so we booked office hours for you on ${when}.`,
+        ]
+      : [`You're booked for office hours on ${when}.`];
 
     return {
       to: booking.email,
-      subject: `You're booked: office hours on ${start.toFormat('ccc d LLL')} at ${start.toFormat('HH:mm')}`,
-      text,
-      html: renderEmailHtml({
-        eyebrow: 'Office hours',
-        heading: `You're booked, ${name}.`,
-        lines: [
-          when,
-          `Booking reference: ${reference}`,
-          'Need to cancel? Use your private link, up to an hour before the start.',
-        ],
-        button: { label: 'Manage or cancel', href: link },
-        footer: 'Keep this email safe: anyone with the link can cancel the booking.',
-      }),
+      subject: options.fromWaitlist
+        ? `A slot opened up, and it's yours: office hours on ${shortWhen}`
+        : `You're booked: office hours on ${shortWhen}`,
+      text: [`Hi ${name},`, '', ...intro, `Booking reference: ${reference}`, '', cancelLine, link, '', footer].join(
+        '\n',
+      ),
+      html: renderEmailHtml(
+        options.fromWaitlist
+          ? {
+              eyebrow: 'Waitlist',
+              heading: "A slot opened up, and it's yours!",
+              lines: [
+                `Hi ${name}, you were first on the waitlist, so we booked it for you.`,
+                when,
+                `Booking reference: ${reference}`,
+                cancelLine,
+              ],
+              button: { label: 'Manage or cancel', href: link },
+              footer,
+            }
+          : {
+              eyebrow: 'Office hours',
+              heading: `You're booked, ${name}.`,
+              lines: [when, `Booking reference: ${reference}`, cancelLine],
+              button: { label: 'Manage or cancel', href: link },
+              footer,
+            },
+      ),
     };
   }
 }

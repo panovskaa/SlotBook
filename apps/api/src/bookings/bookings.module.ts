@@ -23,5 +23,6 @@ import { ReferenceGenerator } from './reference.generator';
         config.geminiApiKey ? new GeminiClient(config.geminiApiKey, config.geminiModel ?? DEFAULT_GEMINI_MODEL) : null,
     },
   ],
+  exports: [BookingsService],
 })
 export class BookingsModule {}

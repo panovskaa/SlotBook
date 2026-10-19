@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { WaitlistService } from '../src/waitlist/waitlist.service';
 import { HOST_KEY, TestApp, createTestApp, resetDatabase } from './helpers';
 
 // Monday 2 Nov 2026, 09:00 in Berlin. The waitlist date is Tuesday 3 Nov.
@@ -118,6 +119,7 @@ describe('Waitlist (FR-9)', () => {
         createdAt: expect.any(String),
         notifiedAt: null,
         availableSlots: [],
+        booking: null,
       });
       expect(JSON.stringify(res.body)).not.toContain('ada@example.com');
     });
@@ -137,45 +139,75 @@ describe('Waitlist (FR-9)', () => {
   });
 
   describe('when a slot opens up', () => {
-    it('a cancellation marks the waitlist NOTIFIED before the cancel response returns', async () => {
+    /** Joins as someone else, at a later time, so the order of the waitlist is clear. */
+    const joinAs = async (name: string, email: string, at: string) => {
+      t.clock.set(at);
+      return (await join({ name, email }).expect(201)).body as { statusToken: string };
+    };
+
+    it('books the freed slot for the first person waiting, before the cancel response returns', async () => {
       const { slot, cancelToken } = await fullyBookedDate();
-      const { body } = await join({}).expect(201);
+      const ada = await joinAs('Ada Lovelace', 'ada@example.com', '2026-11-02T08:00:00Z');
+      await joinAs('Linus Torvalds', 'linus@example.com', '2026-11-02T08:05:00Z');
 
       t.clock.set('2026-11-02T09:00:00Z');
       await http().post(`/manage/${cancelToken}/cancel`).expect(200);
 
-      expect(await entryStatus()).toBe('NOTIFIED');
-      const res = await status(body.statusToken);
-      expect(res.body).toMatchObject({ status: 'NOTIFIED', notifiedAt: '2026-11-02T09:00:00.000Z' });
-      expect(res.body.availableSlots).toEqual([expect.objectContaining({ id: slot.id, state: 'AVAILABLE' })]);
+      const booking = await t.prisma.booking.findFirstOrThrow({ where: { status: 'CONFIRMED' } });
+      expect(booking).toMatchObject({ slotId: slot.id, name: 'Ada Lovelace', email: 'ada@example.com' });
+      expect((await t.prisma.slot.findUniqueOrThrow({ where: { id: slot.id } })).status).toBe('BOOKED');
+
+      const res = await status(ada.statusToken);
+      expect(res.body).toMatchObject({
+        status: 'BOOKED',
+        notifiedAt: '2026-11-02T09:00:00.000Z',
+        availableSlots: [],
+        booking: {
+          reference: booking.reference,
+          status: 'CONFIRMED',
+          startsAt: SLOT_START,
+          endsAt: '2026-11-03T09:30:00.000Z',
+        },
+      });
     });
 
-    it('shows "a slot opened up" on that day in the calendar while a slot is free', async () => {
+    it('keeps everyone else waiting, so the next opening goes to the next person', async () => {
       const { slot, cancelToken } = await fullyBookedDate();
-      await join({}).expect(201);
-      const week = { from: '2026-11-02', to: '2026-11-08' };
-      expect((await http().get('/slots').query(week)).body.openedUp).toEqual([]);
+      await joinAs('Ada Lovelace', 'ada@example.com', '2026-11-02T08:00:00Z');
+      const linus = await joinAs('Linus Torvalds', 'linus@example.com', '2026-11-02T08:05:00Z');
 
       await http().post(`/manage/${cancelToken}/cancel`).expect(200);
-      expect((await http().get('/slots').query(week)).body.openedUp).toEqual([DATE]);
+      expect((await status(linus.statusToken)).body.status).toBe('WAITING');
 
-      // Someone books it again: nothing is open, so the calendar stops saying so.
-      await http().post('/bookings').send({ slotId: slot.id, name: 'Linus', email: 'linus@example.com' }).expect(201);
-      expect((await http().get('/slots').query(week)).body.openedUp).toEqual([]);
+      // Ada cancels the slot she got from the waitlist: now it's Linus's.
+      const adas = await t.prisma.booking.findFirstOrThrow({ where: { status: 'CONFIRMED' } });
+      await t.prisma.booking.update({ where: { id: adas.id }, data: { status: 'CANCELLED' } });
+      await t.prisma.slot.update({ where: { id: slot.id }, data: { status: 'AVAILABLE' } });
+      await t.app.get(WaitlistService).fillFromWaitlist({
+        slotId: slot.id,
+        startsAt: slot.startsAt,
+        endsAt: slot.endsAt,
+      });
+
+      expect((await status(linus.statusToken)).body).toMatchObject({ status: 'BOOKED' });
+      const confirmed = await t.prisma.booking.findMany({ where: { status: 'CONFIRMED' } });
+      expect(confirmed.map((b) => b.name)).toEqual(['Linus Torvalds']);
     });
 
-    it('a new slot from the host notifies too', async () => {
+    it('books a new slot from the host for the first person waiting too', async () => {
       await fullyBookedDate();
       await join({}).expect(201);
-      await http()
+      const res = await http()
         .post('/host/slots')
         .set('X-Host-Key', HOST_KEY)
         .send({ date: DATE, startTime: '15:00', durationMinutes: 30 })
         .expect(201);
-      expect(await entryStatus()).toBe('NOTIFIED');
+      expect(await entryStatus()).toBe('BOOKED');
+      // The host's response already shows the new slot as taken.
+      expect((await t.prisma.slot.findUniqueOrThrow({ where: { id: res.body.id } })).status).toBe('BOOKED');
     });
 
-    it('leaves other dates waiting', async () => {
+    it('leaves the slot free when nobody is waiting for that day', async () => {
       await fullyBookedDate();
       await join({}).expect(201);
       const other = await slotAt('2026-11-04T09:00:00Z');
@@ -185,9 +217,26 @@ describe('Waitlist (FR-9)', () => {
         .expect(201);
       await http().post(`/manage/${body.manageToken}/cancel`).expect(200);
       expect(await entryStatus()).toBe('WAITING');
+      expect((await t.prisma.slot.findUniqueOrThrow({ where: { id: other.id } })).status).toBe('AVAILABLE');
     });
 
-    it('marks a new entry NOTIFIED straight away if a slot opened while it was joining', async () => {
+    it('keeps the person first in line when the slot can no longer be booked', async () => {
+      // Bookings close 30 minutes before the start, so a slot 20 minutes away can't go to anyone.
+      const slot = await slotAt('2026-11-02T08:20:00Z');
+      await t.prisma.waitlistEntry.create({
+        data: { date: new Date('2026-11-02'), name: 'Ada', email: 'ada@example.com', tokenHash: 'h1' },
+      });
+      const filled = await t.app.get(WaitlistService).fillFromWaitlist({
+        slotId: slot.id,
+        startsAt: slot.startsAt,
+        endsAt: slot.endsAt,
+      });
+      expect(filled).toBeNull();
+      expect(await entryStatus()).toBe('WAITING');
+      expect(await t.prisma.booking.count()).toBe(0);
+    });
+
+    it('books a new entry straight away if a slot opened while it was joining', async () => {
       // Simulate the race: the availability check passes, then a slot opens before the re-check.
       const { slot } = await fullyBookedDate();
       const original = t.prisma.waitlistEntry.create.bind(t.prisma.waitlistEntry);
@@ -202,7 +251,8 @@ describe('Waitlist (FR-9)', () => {
       try {
         const res = await join({});
         expect(res.status).toBe(201);
-        expect(res.body.status).toBe('NOTIFIED');
+        expect(res.body.status).toBe('BOOKED');
+        expect((await t.prisma.slot.findUniqueOrThrow({ where: { id: slot.id } })).status).toBe('BOOKED');
       } finally {
         spy.mockRestore();
       }

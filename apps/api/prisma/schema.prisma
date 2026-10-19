@@ -24,7 +24,10 @@ enum BookingStatus {
 
 enum WaitlistStatus {
   WAITING
+  /// Before automatic booking: told a slot opened up. Kept for older entries.
   NOTIFIED
+  /// A freed slot was booked for this person automatically.
+  BOOKED
   EXPIRED
 }
 
@@ -41,17 +44,18 @@ model Slot {
 }
 
 model Booking {
-  id              String        @id @default(uuid()) @db.Uuid
-  slotId          String        @map("slot_id") @db.Uuid
-  slot            Slot          @relation(fields: [slotId], references: [id])
+  id              String         @id @default(uuid()) @db.Uuid
+  slotId          String         @map("slot_id") @db.Uuid
+  slot            Slot           @relation(fields: [slotId], references: [id])
   name            String
   email           String
-  reference       String        @unique
-  cancelTokenHash String        @unique @map("cancel_token_hash")
-  status          BookingStatus @default(CONFIRMED)
-  aiMessage       String?       @map("ai_message")
-  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
-  cancelledAt     DateTime?     @map("cancelled_at") @db.Timestamptz(3)
+  reference       String         @unique
+  cancelTokenHash String         @unique @map("cancel_token_hash")
+  status          BookingStatus  @default(CONFIRMED)
+  aiMessage       String?        @map("ai_message")
+  waitlistEntry   WaitlistEntry?
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  cancelledAt     DateTime?      @map("cancelled_at") @db.Timestamptz(3)
 
   @@index([slotId])
   @@map("booking")
@@ -66,6 +70,9 @@ model WaitlistEntry {
   status     WaitlistStatus @default(WAITING)
   createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
   notifiedAt DateTime?      @map("notified_at") @db.Timestamptz(3)
+  /// The booking made for this person when a slot freed up (status BOOKED).
+  bookingId  String?        @unique @map("booking_id") @db.Uuid
+  booking    Booking?       @relation(fields: [bookingId], references: [id])
 
   @@unique([date, email])
   @@map("waitlist_entry")

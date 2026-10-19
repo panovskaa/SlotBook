@@ -12,7 +12,7 @@ import {
 } from '@slotbook/shared';
 import { AppException } from '../common/app-exception';
 import { Clock } from '../common/clock';
-import { dateColumn, fromDateColumn, startOfNextZonedDay, startOfZonedDay, zonedToUtc } from '../common/time';
+import { startOfNextZonedDay, startOfZonedDay, zonedToUtc } from '../common/time';
 import { APP_CONFIG, AppConfig } from '../config';
 import { SLOT_AVAILABLE, SlotAvailableEvent } from '../events';
 import { PrismaService } from '../prisma/prisma.service';
@@ -115,24 +115,7 @@ export class SlotsService {
     });
     const dtos = slots.map((s) => this.toDto(s, now));
 
-    // FR-9: dates where the waitlist was told a slot opened up, while one is still free to book.
-    const notified = await this.prisma.waitlistEntry.findMany({
-      where: { status: 'NOTIFIED', date: { gte: dateColumn(query.from), lte: dateColumn(query.to) } },
-      distinct: ['date'],
-      select: { date: true },
-    });
-    // NFR-6: each notified date becomes one UTC range, and slots are compared as plain instants.
-    // Turning every slot into a zoned date with Luxon took most of the request time for a full week.
-    const available = slots.filter((_, i) => dtos[i].state === 'AVAILABLE');
-    const openedUp = notified
-      .map((n) => fromDateColumn(n.date))
-      .filter((date) => {
-        const dayStart = startOfZonedDay(date, timezone);
-        const dayEnd = startOfNextZonedDay(date, timezone);
-        return available.some((s) => s.startsAt >= dayStart && s.startsAt < dayEnd);
-      });
-
-    return { timezone, slots: dtos, openedUp };
+    return { timezone, slots: dtos };
   }
 
   /** One slot, for the booking page. Deleted slots and slots that have started don't exist for visitors. */

@@ -60,7 +60,7 @@ describe('Confirmation email with the cancellation link (FR-7)', () => {
     send.mockRestore();
   });
 
-  it('emails the waitlist on joining, and again with a booking link when a slot opens', async () => {
+  it('emails the waitlist on joining, and books and emails the first one when a slot opens', async () => {
     // 3 Nov has one slot, and Ada has booked it, so the day is full.
     const slot = await newSlot();
     const booked = await http()
@@ -68,29 +68,32 @@ describe('Confirmation email with the cancellation link (FR-7)', () => {
       .send({ slotId: slot.id, name: 'Ada Lovelace', email: 'ada@example.com' })
       .expect(201);
 
-    // Grace joins the waitlist and gets her private status link by email.
-    const joined = await http()
+    // Grace, then Linus, join the waitlist. Each gets the private status link by email.
+    const grace = await http()
       .post('/waitlist')
       .send({ date: '2026-11-03', name: 'Grace Hopper', email: 'grace@example.com' })
       .expect(201);
-    expect(joined.body.emailSent).toBe(true);
+    await http()
+      .post('/waitlist')
+      .send({ date: '2026-11-03', name: 'Linus Torvalds', email: 'linus@example.com' })
+      .expect(201);
+    expect(grace.body.emailSent).toBe(true);
     const welcome = mailer.sent.find((m) => m.to === 'grace@example.com')!;
     expect(welcome.subject).toBe("You're on the waitlist for Tuesday 3 November");
-    expect(welcome.text).toContain(`/waitlist/${joined.body.statusToken}`);
-    await http().get(`/waitlist/${joined.body.statusToken}`).expect(200);
+    expect(welcome.text).toContain(`/waitlist/${grace.body.statusToken}`);
+    expect(welcome.text).toContain("we'll book it for you");
 
-    // Ada cancels: Grace gets "A slot opened up!" with a link that books exactly that slot.
+    // Ada cancels: the slot is booked for Grace, who was first, and only she gets an email.
     mailer.sent.length = 0;
     await http().post(`/manage/${booked.body.manageToken}/cancel`).expect(200);
-    expect(mailer.sent).toHaveLength(1);
-    const [opened] = mailer.sent;
-    expect(opened.to).toBe('grace@example.com');
-    expect(opened.subject).toBe('A slot opened up! Office hours on Tue 3 Nov at 11:00');
-    const slotId = /\/book\/([0-9a-f-]{36})/.exec(opened.text)?.[1];
-    expect(slotId).toBe(slot.id);
+    expect(mailer.sent.map((m) => m.to)).toEqual(['grace@example.com']);
+    const [yours] = mailer.sent;
+    expect(yours.subject).toBe("A slot opened up, and it's yours: office hours on Tue 3 Nov at 11:00");
 
-    // Following the link, Grace books it.
-    await http().post('/bookings').send({ slotId, name: 'Grace Hopper', email: 'grace@example.com' }).expect(201);
+    // Her email's private link manages the booking that was made for her.
+    const token = /\/manage\/([A-Za-z0-9_-]{43})/.exec(yours.text)?.[1];
+    const manage = await http().get(`/manage/${token}`).expect(200);
+    expect(manage.body).toMatchObject({ name: 'Grace Hopper', status: 'CONFIRMED', reference: expect.any(String) });
   });
 
   it('still adds to the waitlist when the email fails', async () => {

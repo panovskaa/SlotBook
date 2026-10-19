@@ -21,6 +21,7 @@ const waiting: WaitlistStatusResponse = {
   createdAt: '2026-11-02T08:00:00.000Z',
   notifiedAt: null,
   availableSlots: [],
+  booking: null,
 };
 
 function Where() {
@@ -61,7 +62,43 @@ describe('Waitlist status page', () => {
     expect(screen.queryByLabelText('Private waitlist link')).not.toBeInTheDocument();
   });
 
-  it('says a slot opened up and links straight to booking it', async () => {
+  it('shows the slot that was booked for them from the waitlist', async () => {
+    vi.mocked(api.waitlistStatus).mockResolvedValue({
+      ...waiting,
+      status: 'BOOKED',
+      notifiedAt: '2026-11-02T09:00:00.000Z',
+      booking: {
+        reference: 'K7M2-QX9P',
+        status: 'CONFIRMED',
+        startsAt: '2026-11-03T09:00:00.000Z',
+        endsAt: '2026-11-03T09:30:00.000Z',
+      },
+    });
+    renderAt(`/waitlist/${TOKEN}`);
+    expect(await screen.findByRole('heading', { name: 'You got a slot!' })).toBeInTheDocument();
+    expect(screen.getByText('10:00 – 10:30')).toBeInTheDocument();
+    expect(screen.getByText('K7M2-QX9P')).toBeInTheDocument();
+    expect(screen.getByText('Booked for you')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Check again' })).not.toBeInTheDocument();
+  });
+
+  it('says so when the booking from the waitlist was cancelled', async () => {
+    vi.mocked(api.waitlistStatus).mockResolvedValue({
+      ...waiting,
+      status: 'BOOKED',
+      booking: {
+        reference: 'K7M2-QX9P',
+        status: 'CANCELLED',
+        startsAt: '2026-11-03T09:00:00.000Z',
+        endsAt: '2026-11-03T09:30:00.000Z',
+      },
+    });
+    renderAt(`/waitlist/${TOKEN}`);
+    expect(await screen.findByRole('heading', { name: 'Your waitlist booking was cancelled.' })).toBeInTheDocument();
+    expect(screen.getByText('Cancelled')).toBeInTheDocument();
+  });
+
+  it('still shows an older "slot opened up" entry with links to book', async () => {
     vi.mocked(api.waitlistStatus).mockResolvedValue({
       ...waiting,
       status: 'NOTIFIED',

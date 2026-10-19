@@ -26,8 +26,6 @@ export interface SlotDto {
 export interface SlotsResponse {
   timezone: string;
   slots: SlotDto[];
-  /** Dates (YYYY-MM-DD) where someone on the waitlist was told a slot opened up and one is still free (FR-9). */
-  openedUp: string[];
 }
 
 /** GET /slots/:id */
@@ -172,7 +170,8 @@ export interface InsightsResponse {
   weekdayRates: WeekdayRate[];
 }
 
-export type WaitlistStatus = 'WAITING' | 'NOTIFIED' | 'EXPIRED';
+/** BOOKED: a freed slot was booked for this person. NOTIFIED is from before automatic booking. */
+export type WaitlistStatus = 'WAITING' | 'NOTIFIED' | 'BOOKED' | 'EXPIRED';
 
 /** POST /waitlist (FR-9) */
 export interface JoinWaitlistRequest {
@@ -204,6 +203,8 @@ export interface WaitlistStatusResponse {
   notifiedAt: string | null;
   /** Slots on that date that can be booked right now, so the visitor can go straight to one. */
   availableSlots: SlotDto[];
+  /** The slot booked for this person from the waitlist (status BOOKED), else null. */
+  booking: { reference: string; status: BookingStatus; startsAt: string; endsAt: string } | null;
 }
 
 export interface HealthResponse {

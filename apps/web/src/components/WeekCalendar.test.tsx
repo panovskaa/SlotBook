@@ -16,10 +16,10 @@ const slot = (id: string, startsAt: string, state: SlotDto['state']): SlotDto =>
   state,
 });
 
-const renderWeek = (slots: SlotDto[], openedUp: string[] = []) =>
+const renderWeek = (slots: SlotDto[]) =>
   render(
     <MemoryRouter>
-      <WeekCalendar dates={dates} slots={slots} timezone={TZ} today="2026-11-03" openedUp={openedUp} />
+      <WeekCalendar dates={dates} slots={slots} timezone={TZ} today="2026-11-03" />
     </MemoryRouter>,
   );
 
@@ -75,13 +75,6 @@ describe('WeekCalendar', () => {
       slot('c', '2026-11-02T09:00:00Z', 'BOOKED'), // Monday, before "today"
     ]);
     expect(screen.queryByText('Fully booked')).not.toBeInTheDocument();
-  });
-
-  it('shows "A slot opened up!" on days the API marks', () => {
-    renderWeek([slot('a', '2026-11-05T09:00:00Z', 'AVAILABLE')], ['2026-11-05']);
-    const thursday = screen.getByRole('region', { name: /Thursday 5 November/ });
-    expect(within(thursday).getByText('A slot opened up!')).toBeInTheDocument();
-    expect(screen.getAllByText('A slot opened up!')).toHaveLength(1);
   });
 
   it('hides the decorative icons from screen readers', () => {
