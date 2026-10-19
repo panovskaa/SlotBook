@@ -7,7 +7,11 @@ export interface AppConfig {
   webOrigin: string;
   port: number;
   geminiApiKey?: string;
+  /** Free-tier Gemini model for confirmation messages (FR-11). */
+  geminiModel?: string;
 }
+
+export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash-lite';
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
 
@@ -31,5 +35,6 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     webOrigin: env.WEB_ORIGIN ?? 'http://localhost:5173',
     port: Number(env.PORT ?? 3000),
     geminiApiKey: env.GEMINI_API_KEY || undefined,
+    geminiModel: env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
   };
 }

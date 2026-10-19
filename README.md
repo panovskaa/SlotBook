@@ -14,13 +14,13 @@ The full requirements are in [SRS.md](SRS.md) and the visual design system in [D
 | FR-4 No double bookings | Done: guarded update, partial unique index, 20-request race test run 50 times |
 | FR-5 Availability rules | Done: one shared table of cases runs against the API DTO and the web form |
 | FR-6 Booking reference | Done (`GET /bookings/ref/:code`) |
-| FR-11 Confirmation message | Template message only; the Gemini call isn't wired in yet |
+| FR-11 AI confirmation message | Done: Gemini with a 3-second timeout, template fallback and a 300-character limit |
 | `/health`, error format, request-ID logs, host key, Helmet, CORS | Done |
 | FR-7 Cancel through the private link | Done: `/manage/:token` page, `GET /manage/:token`, `POST /manage/:token/cancel`, 60-minute cutoff |
 | FR-8 Host dashboard | Done: `/host` with stats, upcoming bookings, adding slots and deleting free ones |
 | FR-9 Waitlist | Done: join from a fully booked day, private status link, `slot.available` listener, "A slot opened up!" in the calendar |
 | FR-10 Insights | Done: heatmap by weekday and hour with a data table, top 3 times, booking rate per weekday (on the dashboard) |
-| Gemini message (FR-11), Swagger, rate limiting, E2E (Playwright), axe checks, CI | Not started |
+| Swagger, rate limiting, E2E (Playwright), axe checks, CI | Not started |
 
 ## Requirements
 
@@ -54,7 +54,8 @@ the public pages.
 | `APP_TIMEZONE` | Yes | The one IANA time zone the app works in, such as `Europe/Berlin`. Dates and times the host enters are read in this zone; the database stores UTC. |
 | `WEB_ORIGIN` | No | The web app's origin, for CORS. Default `http://localhost:5173`. |
 | `PORT` | No | API port. Default `3000`. |
-| `GEMINI_API_KEY` | No | Free-tier Gemini key for AI confirmation messages (FR-11). Without it, a template message is used. |
+| `GEMINI_API_KEY` | No | Free-tier Gemini key for AI confirmation messages (FR-11), from https://aistudio.google.com/apikey. Without it, a template message is used. |
+| `GEMINI_MODEL` | No | Which Gemini model to use. Default `gemini-2.5-flash-lite` (free tier, fast). |
 
 ## Try the API
 
@@ -149,6 +150,14 @@ packages/shared  Rules, error codes and API types used by both
   - **Top 3.** The "top 3 time slots" are weekday-and-start-time pairs (such as "Monday 10:00"), with ties broken by weekday, then time. The heatmap groups by hour, so 10:00 and 10:30 share a cell.
   - **Consistency.** The four queries run in one repeatable-read transaction, so their numbers agree.
 - **Heatmap colours and accessibility.** One blue hue, lighter to darker, with empty hours left on the surface colour. The picture is hidden from screen readers. A data table with the same numbers is always in the page for them, and "Show as table" shows it on screen.
+- **How the AI confirmation message works.**
+  - **The request.** After a booking is committed, the API calls Gemini's `generateContent` REST method directly, without an SDK. The key goes in the `x-goog-api-key` header, never the URL.
+  - **What's sent.** Only the booker's first name, the day and the time. Never the surname or the email.
+  - **Fallbacks.** After 3 seconds the request is cancelled and the template is used. The template is also used when there's no key, when Gemini returns an error, or when the answer is empty.
+  - **Clean-up.** Answers are reduced to plain text and kept within 300 characters: whole sentences where possible, otherwise whole words with "…".
+  - **Bookings never fail because of it.** A slow Gemini delays the booking response by at most 3 seconds.
+  - **Tests.** No test calls the real API. They use a fake client, and with no key configured there's no client at all.
+  - **Free tier.** Google may use free-tier prompts to improve its products, which is another reason only a first name is sent.
 - **Extra error codes.** FR-9 gives status codes but no error codes, so the waitlist adds `ALREADY_ON_WAITLIST` (409) and `DATE_HAS_AVAILABILITY` (422).
 - **Extra endpoint.** `GET /slots/:id` isn't in the SRS list. The booking page needs it to load its slot when someone opens a `/book/:slotId` link directly.
 - **"This week" before the first response.** The browser doesn't know the app's time zone until the first slot list arrives, so it uses its own zone to pick the opening week. This only matters around midnight on Sunday.

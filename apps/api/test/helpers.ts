@@ -4,6 +4,7 @@ import { AppModule } from '../src/app.module';
 import { Clock } from '../src/common/clock';
 import { AppConfig } from '../src/config';
 import { configureApp } from '../src/configure-app';
+import { LLM_CLIENT, LlmClient } from '../src/llm/llm-client';
 import { PrismaService } from '../src/prisma/prisma.service';
 
 export const HOST_KEY = 'test-host-key-0123456789';
@@ -29,7 +30,7 @@ export interface TestApp {
 }
 
 /** Boots the real app (same pipes, filter and guards as main.ts) against the test database. */
-export async function createTestApp(now: string): Promise<TestApp> {
+export async function createTestApp(now: string, options: { llm?: LlmClient } = {}): Promise<TestApp> {
   const config: AppConfig = {
     databaseUrl: process.env.DATABASE_URL!,
     hostAccessKey: HOST_KEY,
@@ -43,6 +44,9 @@ export async function createTestApp(now: string): Promise<TestApp> {
   })
     .overrideProvider(Clock)
     .useValue(clock)
+    // No test ever calls the real Gemini API: without an override, there's no LLM at all.
+    .overrideProvider(LLM_CLIENT)
+    .useValue(options.llm ?? null)
     .compile();
 
   const app = configureApp(moduleRef.createNestApplication({ bufferLogs: true }), config);
