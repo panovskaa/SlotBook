@@ -132,6 +132,7 @@ describe('Join the waitlist page', () => {
       status: 'WAITING',
       statusToken: TOKEN,
       statusPath: `/waitlist/${TOKEN}`,
+      emailSent: true,
     });
     vi.mocked(api.waitlistStatus).mockResolvedValue(waiting);
     renderAt('/join-waitlist/2026-11-03');

@@ -10,7 +10,9 @@ import { useApi } from '../lib/useApi';
 /** FR-9: the private waitlist status link. Shows when a slot opens and lets the visitor book it. */
 export function WaitlistStatusPage() {
   const { token = '' } = useParams();
-  const justJoined = Boolean((useLocation().state as { justJoined?: boolean } | null)?.justJoined);
+  const state = useLocation().state as { justJoined?: boolean; emailSent?: boolean } | null;
+  const justJoined = Boolean(state?.justJoined);
+  const emailSent = Boolean(state?.emailSent);
   const result = useApi((signal) => api.waitlistStatus(token, signal), token);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -96,7 +98,8 @@ export function WaitlistStatusPage() {
             {justJoined ? "You're on the waitlist." : 'Still waiting'}
           </h1>
           <p className="lede lede--tight">
-            {dateLabel} is fully booked. If a slot opens up, this page will show it and we'll send you a note.
+            {dateLabel} is fully booked. If a slot opens up, we'll email you a link to book it, and this page will show
+            it too.
           </p>
         </>
       )}
@@ -134,7 +137,10 @@ export function WaitlistStatusPage() {
 
       {justJoined && (
         <PrivateLink path={`/waitlist/${token}`} label="Private waitlist link">
-          Come back to this link to check the waitlist. Keep it safe: it's shown only once.
+          Come back to this link to check the waitlist.{' '}
+          {emailSent
+            ? "We've also emailed it to you. It's private, so keep it to yourself."
+            : "Copy it now: it's shown only once here."}
         </PrivateLink>
       )}
 

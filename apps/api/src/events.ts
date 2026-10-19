@@ -4,4 +4,5 @@ export const SLOT_AVAILABLE = 'slot.available';
 export interface SlotAvailableEvent {
   slotId: string;
   startsAt: Date;
+  endsAt: Date;
 }

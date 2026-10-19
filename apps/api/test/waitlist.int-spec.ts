@@ -56,6 +56,7 @@ describe('Waitlist (FR-9)', () => {
         status: 'WAITING',
         statusToken: expect.stringMatching(/^[A-Za-z0-9_-]{43}$/),
         statusPath: `/waitlist/${res.body.statusToken}`,
+        emailSent: false,
       });
       const row = await t.prisma.waitlistEntry.findFirstOrThrow();
       expect(row).toMatchObject({ name: 'Ada Lovelace', email: 'ada@example.com', status: 'WAITING' });

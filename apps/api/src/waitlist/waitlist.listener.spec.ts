@@ -4,7 +4,8 @@ import { dateColumn } from '../common/time';
 import { AppConfig } from '../config';
 import { PrismaService } from '../prisma/prisma.service';
 import { SlotsService } from '../slots/slots.service';
-import { DevMailer, OutgoingEmail } from './dev-mailer';
+import { MailService } from '../mail/mail.service';
+import { MailMessage } from '../mail/mailer';
 import { WaitlistListener } from './waitlist.listener';
 import { WaitlistService } from './waitlist.service';
 
@@ -45,14 +46,27 @@ class FixedClock extends Clock {
 
 function setup(rows: WaitlistEntry[]) {
   const table = new InMemoryWaitlist(rows);
-  const sent: OutgoingEmail[] = [];
-  const mailer = { send: async (e: OutgoingEmail) => void sent.push(e) } as DevMailer;
+  const sent: MailMessage[] = [];
+  const mail = {
+    send: async (m: MailMessage) => {
+      sent.push(m);
+      return true;
+    },
+  } as unknown as MailService;
   const prisma = { waitlistEntry: table } as unknown as PrismaService;
-  const service = new WaitlistService(prisma, new FixedClock(), {} as SlotsService, mailer, {
+  const service = new WaitlistService(prisma, new FixedClock(), {} as SlotsService, mail, {
     timezone: 'Europe/Berlin',
+    webOrigin: 'https://book.example.com',
   } as AppConfig);
   return { table, sent, listener: new WaitlistListener(service) };
 }
+
+/** A 30-minute slot starting at `iso`. */
+const opened = (iso: string) => ({
+  slotId: 's1',
+  startsAt: new Date(iso),
+  endsAt: new Date(new Date(iso).getTime() + 30 * 60_000),
+});
 
 describe('WaitlistListener (in-memory)', () => {
   it('notifies everyone waiting for that date, and nobody else', async () => {
@@ -63,7 +77,7 @@ describe('WaitlistListener (in-memory)', () => {
     const { table, sent, listener } = setup([waiting1, waiting2, alreadyNotified, otherDate]);
 
     // 23:30 UTC on 2 Nov is 00:30 on 3 Nov in Berlin: the date is the local one.
-    await listener.handle({ slotId: 's1', startsAt: new Date('2026-11-02T23:30:00Z') });
+    await listener.handle(opened('2026-11-02T23:30:00Z'));
 
     expect(table.rows.map((r) => r.status)).toEqual(['NOTIFIED', 'NOTIFIED', 'NOTIFIED', 'WAITING']);
     expect(waiting1.notifiedAt).toEqual(new Date('2026-11-02T08:00:00Z'));
@@ -71,17 +85,25 @@ describe('WaitlistListener (in-memory)', () => {
     expect(sent.map((e) => e.to)).toEqual([waiting1.email, waiting2.email]);
   });
 
-  it('writes a friendly email with the first name and date, and no secret', async () => {
+  it('emails a link that books the opened slot, with the first name and time', async () => {
     const { sent, listener } = setup([entry('2026-11-03', 'WAITING', 'Grace Brewster Hopper')]);
-    await listener.handle({ slotId: 's1', startsAt: new Date('2026-11-03T09:00:00Z') });
-    expect(sent[0].subject).toBe('A slot opened up on Tuesday 3 November');
-    expect(sent[0].text).toMatch(/^Hi Grace, a slot has opened up on Tuesday 3 November\./);
-    expect(sent[0].text).not.toMatch(/hash|token/i);
+    await listener.handle(opened('2026-11-03T09:00:00Z'));
+
+    const [mail] = sent;
+    expect(mail.subject).toBe('A slot opened up! Office hours on Tue 3 Nov at 10:00');
+    expect(mail.text).toContain('Hi Grace,');
+    expect(mail.text).toContain(
+      'A slot opened up! Tuesday 3 November 2026, 10:00–10:30 (Europe/Berlin) is free again.',
+    );
+    expect(mail.text).toContain('https://book.example.com/book/s1');
+    expect(mail.html).toContain('href="https://book.example.com/book/s1"');
+    expect(mail.html).toContain('Book 10:00');
+    expect(mail.text).not.toMatch(/hash|token/i);
   });
 
   it('ignores slots on dates that have passed', async () => {
     const { table, sent, listener } = setup([entry('2026-11-01', 'WAITING')]);
-    await listener.handle({ slotId: 's1', startsAt: new Date('2026-11-01T09:00:00Z') });
+    await listener.handle(opened('2026-11-01T09:00:00Z'));
     expect(table.rows[0].status).toBe('WAITING');
     expect(sent).toEqual([]);
   });
@@ -91,8 +113,6 @@ describe('WaitlistListener (in-memory)', () => {
     table.updateManyAndReturn = async () => {
       throw new Error('database down');
     };
-    await expect(
-      listener.handle({ slotId: 's1', startsAt: new Date('2026-11-03T09:00:00Z') }),
-    ).resolves.toBeUndefined();
+    await expect(listener.handle(opened('2026-11-03T09:00:00Z'))).resolves.toBeUndefined();
   });
 });

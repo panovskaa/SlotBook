@@ -7,7 +7,6 @@ import {
   SlotDto,
   WaitlistStatusResponse,
 } from '@slotbook/shared';
-import { DateTime } from 'luxon';
 import { AppException } from '../common/app-exception';
 import { Clock } from '../common/clock';
 import { createSecretToken, hashToken, tokenMatches } from '../common/secret-token';
@@ -16,8 +15,9 @@ import { APP_CONFIG, AppConfig } from '../config';
 import { SlotAvailableEvent } from '../events';
 import { PrismaService } from '../prisma/prisma.service';
 import { SlotsService } from '../slots/slots.service';
-import { DevMailer } from './dev-mailer';
+import { MailService } from '../mail/mail.service';
 import { JoinWaitlistDto } from './dto/join-waitlist.dto';
+import { joinedEmail, slotOpenedEmail } from './waitlist-emails';
 
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
@@ -27,7 +27,7 @@ export class WaitlistService {
     private readonly prisma: PrismaService,
     private readonly clock: Clock,
     private readonly slots: SlotsService,
-    private readonly mailer: DevMailer,
+    private readonly mail: MailService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {}
 
@@ -73,11 +73,17 @@ export class WaitlistService {
       });
     }
 
+    // Sent after the entry is saved; a mail problem never undoes joining.
+    const emailSent = await this.mail.send(joinedEmail(this.config, entry, dto.date, secret.token), {
+      waitlistEntryId: entry.id,
+    });
+
     return {
       date: dto.date,
       status: entry.status,
       statusToken: secret.token,
       statusPath: `/waitlist/${secret.token}`,
+      emailSent,
     };
   }
 
@@ -108,8 +114,8 @@ export class WaitlistService {
   }
 
   /**
-   * The slot.available listener's work: everyone waiting for that date is marked NOTIFIED, and
-   * gets an "email" (written to the log, A4). Returns how many entries were notified.
+   * The slot.available listener's work: everyone waiting for that date is marked NOTIFIED and gets
+   * an email with a link that books the opened slot. Returns how many entries were notified.
    */
   async notifySlotAvailable(event: SlotAvailableEvent): Promise<number> {
     const now = this.clock.now();
@@ -121,14 +127,15 @@ export class WaitlistService {
       data: { status: 'NOTIFIED', notifiedAt: now },
     });
 
-    const when = DateTime.fromISO(date, { locale: 'en-GB' }).toFormat('cccc d LLLL');
-    for (const entry of notified) {
-      await this.mailer.send({
-        to: entry.email,
-        subject: `A slot opened up on ${when}`,
-        text: `Hi ${entry.name.split(/\s+/)[0]}, a slot has opened up on ${when}. Open your waitlist link to book it before someone else does.`,
-      });
-    }
+    // Side by side, so a slow mail server delays the cancellation response by one timeout at most.
+    await Promise.all(
+      notified.map((entry) =>
+        this.mail.send(slotOpenedEmail(this.config, entry, event), {
+          waitlistEntryId: entry.id,
+          slotId: event.slotId,
+        }),
+      ),
+    );
     return notified.length;
   }
 

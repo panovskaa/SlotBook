@@ -18,7 +18,7 @@ The full requirements are in [SRS.md](../SRS.md) and the visual design system in
 | `/health`, error format, request-ID logs, host key, Helmet, CORS | Done |
 | FR-7 Cancel through the private link | Done: `/manage/:token` page, `GET /manage/:token`, `POST /manage/:token/cancel`, 60-minute cutoff |
 | FR-8 Host dashboard | Done: `/host` with stats, upcoming bookings, adding slots and deleting free ones |
-| FR-9 Waitlist | Done: join from a fully booked day, private status link, `slot.available` listener, "A slot opened up!" in the calendar |
+| FR-9 Waitlist | Done: join from a fully booked day, private status link, `slot.available` listener, "A slot opened up!" in the calendar, emails on joining and when a slot opens (with a link that books it) |
 | FR-10 Insights | Done: heatmap by weekday and hour with a data table, top 3 times, booking rate per weekday (on the dashboard) |
 | NFR-1 Accessibility | axe (WCAG 2.1 A/AA) runs on every page the E2E tests visit; ESLint `jsx-a11y` is on for the web app, and `jsx-a11y/alt-text` fails the lint when an alt is missing. A manual keyboard pass isn't done |
 | NFR-2 Mobile | E2E runs at desktop, Pixel 7 and iPhone SE sizes and checks for horizontal overflow; screenshot comparisons aren't done |
@@ -237,7 +237,7 @@ e2e              Playwright end-to-end and accessibility tests
 - **New slots notify the waitlist.** Creating a bookable slot emits `slot.available`, as a cancellation does, ready for FR-9.
 - **How the waitlist works.**
   - **Who can join.** You can join for any date that hasn't passed and has nothing bookable: every slot is booked or inside the 30-minute cutoff, or the date has no slots yet. The calendar offers it on days where every slot is taken.
-  - **Notifying.** Cancellations and new slots emit `slot.available`. The listener marks that date's waiting entries `NOTIFIED` and "emails" each person through a development mailer that writes to the server log (A4). The event is awaited, so the waitlist is up to date before the cancel or create response returns. A failed notification is logged and never undoes the cancellation.
+  - **Notifying.** Cancellations and new slots emit `slot.available`. The listener marks that date's waiting entries `NOTIFIED` and emails each person "A slot opened up!", with a button that opens `/book/:slotId` for that exact slot. Joining also sends an email with the private status link. All emails go through one `MailService` (SMTP, Mailpit locally); without `SMTP_URL` they are skipped and logged. The event is awaited, so the waitlist is up to date before the cancel or create response returns. A failed notification is logged and never undoes the cancellation.
   - **No missed openings.** Joining re-checks availability after inserting the entry. If a slot opened in between, the entry is marked `NOTIFIED` at once.
   - **Expiry.** Entries turn `EXPIRED` once their date has passed in the app's time zone. This happens the next time the status link is opened; there's no background job.
   - **Calendar badge.** A day shows "A slot opened up!" while it has a notified entry and a slot is still free.

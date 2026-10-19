@@ -42,8 +42,9 @@ to send real email instead of using Mailpit.
   once, and exactly one succeeds.
 - **Cancelling** through a private link, which is shown once on screen and emailed. It works until
   an hour before the start. Only a hash of the link's token is stored.
-- **Waitlist** for fully booked days. When a booking is cancelled, people on the waitlist see that
-  a slot has opened up.
+- **Waitlist** for fully booked days. Joining sends an email with a private status link. When a
+  slot opens up, everyone waiting gets an email saying "A slot opened up!" with a button that books
+  that exact time.
 - **Host dashboard**: stats, upcoming bookings, adding and deleting slots, and insights (a heatmap
   of bookings by weekday and hour, the top 3 times, and the booking rate per weekday).
 - **AI confirmation message** from Gemini, with a 3-second timeout and a template fallback.
@@ -71,5 +72,4 @@ is in [DESIGN.md](DESIGN.md).
 ## What I would improve with more time
 
 - **Rescheduling**: move a booking to another time from the private link, instead of cancelling and booking again.
-- **Email the waitlist** when a slot opens, instead of only showing it on the waitlist's status page.
 - **Calendar invites**, so a booking lands straight in the visitor's calendar.

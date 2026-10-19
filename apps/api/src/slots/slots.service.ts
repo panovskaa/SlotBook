@@ -67,6 +67,7 @@ export class SlotsService {
       await this.events.emitAsync(SLOT_AVAILABLE, {
         slotId: slot.id,
         startsAt: slot.startsAt,
+        endsAt: slot.endsAt,
       } satisfies SlotAvailableEvent);
     }
     return created;

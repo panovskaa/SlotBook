@@ -237,7 +237,13 @@ describe('Host dashboard (FR-8)', () => {
         startTime: '10:00',
         durationMinutes: 30,
       });
-      expect(events).toEqual([{ slotId: res.body.id, startsAt: new Date('2026-11-03T09:00:00Z') }]);
+      expect(events).toEqual([
+        {
+          slotId: res.body.id,
+          startsAt: new Date('2026-11-03T09:00:00Z'),
+          endsAt: new Date('2026-11-03T09:30:00Z'),
+        },
+      ]);
     });
 
     it('stays quiet for a slot already inside the booking cutoff', async () => {

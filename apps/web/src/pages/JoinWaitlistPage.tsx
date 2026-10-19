@@ -21,7 +21,7 @@ export function JoinWaitlistPage() {
   const join = async (values: BookingFormValues): Promise<SubmitProblem | null> => {
     try {
       const res = await api.joinWaitlist({ date, ...values });
-      void navigate(res.statusPath, { state: { justJoined: true } });
+      void navigate(res.statusPath, { state: { justJoined: true, emailSent: res.emailSent } });
       return null;
     } catch (err) {
       const e = err instanceof ApiRequestError ? err : new ApiRequestError(0, null);

@@ -189,6 +189,8 @@ export interface JoinWaitlistResponse {
   statusToken: string;
   /** e.g. /waitlist/abc… */
   statusPath: string;
+  /** Whether the confirmation, with the private status link, was emailed */
+  emailSent: boolean;
 }
 
 /** GET /waitlist/:token — only the link holder sees this. */

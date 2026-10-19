@@ -9,6 +9,7 @@ import { HostKeyGuard } from './common/host-key.guard';
 import { APP_CONFIG, AppConfig } from './config';
 import { HealthController } from './health/health.controller';
 import { HostModule } from './host/host.module';
+import { MailModule } from './mail/mail.module';
 import { ManageModule } from './manage/manage.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SlotsModule } from './slots/slots.module';
@@ -54,6 +55,7 @@ export class AppModule {
         // NFR-4: in-memory counters, applied only where @UseGuards(ThrottlerGuard) appears.
         ThrottlerModule.forRoot({ throttlers: [{ ttl: config.rateLimit.windowMs, limit: config.rateLimit.limit }] }),
         PrismaModule,
+        MailModule,
         SlotsModule,
         BookingsModule,
         ManageModule,

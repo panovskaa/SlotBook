@@ -116,7 +116,9 @@ describe('Cancel through the private link (FR-7)', () => {
       const { token, slotId } = await bookSlot();
       await http().post(`/manage/${token}/cancel`).expect(200);
       await http().post(`/manage/${token}/cancel`).expect(200);
-      expect(events).toEqual([{ slotId, startsAt: new Date(SLOT_START) }]);
+      expect(events).toEqual([
+        { slotId, startsAt: new Date(SLOT_START), endsAt: new Date('2026-11-02T10:30:00.000Z') },
+      ]);
     });
 
     it.each([
