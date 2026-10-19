@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import { Icon } from './Icon';
+import { ExpandingLink } from './ui/expanding-link';
 
 export function SiteHeader() {
   return (
@@ -7,9 +9,7 @@ export function SiteHeader() {
         <Link to="/" className="wordmark">
           SlotBook
         </Link>
-        <Link to="/#times" className="button button--primary button--small">
-          Book a session
-        </Link>
+        <ExpandingLink to="/#times" label="Book a session" icon={<Icon name="calendarPlus" size={18} />} />
       </div>
     </header>
   );

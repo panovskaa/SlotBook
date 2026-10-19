@@ -1284,3 +1284,40 @@ html {
     padding-top: var(--space-4);
   }
 }
+
+/*
+ * The smooth input's frame shows the focus ring (border + glow), so the inner field must not draw the
+ * site-wide focus outline as well; that produced a second blue box inside the frame.
+ */
+.smooth-input__field:focus-visible {
+  outline: none;
+}
+
+/* The previous week stays on screen, faded, while the next one loads (keeps the scroll position). */
+.week-body {
+  transition: opacity 150ms ease;
+}
+.week-body--stale {
+  opacity: 0.45;
+  pointer-events: none;
+}
+/* A steady minimum height, so a short or empty week doesn't make the page jump either. */
+.panel {
+  min-height: 560px;
+}
+@media (max-width: 767px) {
+  .panel {
+    min-height: 0;
+  }
+}
+
+/* "Book a session" in the header: an accent pill that opens from an icon (see expanding-link.tsx). */
+.expanding-link {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.9375rem;
+  transition: background-color var(--ease);
+}
+.expanding-link:hover {
+  background: var(--accent-hover);
+}

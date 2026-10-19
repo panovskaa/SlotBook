@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { Icon } from '../components/Icon';
@@ -23,14 +23,20 @@ export function CalendarPage() {
     if (params.get('week') !== weekKey) setParams({ week: weekKey }, { replace: true });
   }, [params, weekKey, setParams]);
 
+  // The dates travel with the slots, so the last loaded week can stay on screen as one piece.
   const result = useApi(
     (signal) =>
       api.slots(dates[0], dates[6], signal).then((data) => {
         rememberAppTimezone(data.timezone);
-        return data;
+        return { dates, data };
       }),
     weekKey,
   );
+
+  // While the next week loads, keep showing the last one (faded) instead of a short loading box:
+  // swapping in something shorter made the page shrink, and the browser pulled the scroll position up.
+  const shown = result.status === 'ready' ? result.data : result.status === 'loading' ? result.previous : undefined;
+  const stale = result.status === 'loading' && shown !== undefined;
 
   // "Book a session" in the header links to /#times: bring the calendar into view.
   const { hash } = useLocation();
@@ -38,7 +44,15 @@ export function CalendarPage() {
     if (hash === '#times') document.getElementById('times')?.scrollIntoView();
   }, [hash]);
 
-  const goTo = (target: typeof week) => setParams({ week: formatWeek(target) });
+  // Changing week never makes the panel shorter than it was, so the page can't shrink under the
+  // reader and pull the scroll position up (an emptier week just leaves some space).
+  const panelRef = useRef<HTMLElement>(null);
+  const [minHeight, setMinHeight] = useState<number>();
+  const goTo = (target: typeof week) => {
+    const current = panelRef.current?.offsetHeight ?? 0;
+    setMinHeight((h) => Math.max(h ?? 0, current));
+    setParams({ week: formatWeek(target) });
+  };
   const isThisWeek = compareWeeks(week, thisWeek) === 0;
   const isPast = compareWeeks(week, thisWeek) < 0;
 
@@ -47,7 +61,13 @@ export function CalendarPage() {
       <LandingHero />
 
       <div id="times" className="container calendar-section">
-        <section className="panel" aria-labelledby="week-heading">
+        <section
+          ref={panelRef}
+          className="panel"
+          style={{ minHeight }}
+          aria-labelledby="week-heading"
+          aria-busy={result.status === 'loading'}
+        >
           <div className="week-nav">
             <h2 id="week-heading" className="week-nav__label" aria-live="polite">
               {weekLabel(week)}
@@ -81,31 +101,39 @@ export function CalendarPage() {
             </div>
           </div>
 
-          {result.status === 'loading' && <LoadingState label="Loading times…" />}
+          {result.status === 'loading' && !stale && <LoadingState label="Loading times…" />}
+          {stale && (
+            <p className="visually-hidden" role="status">
+              Loading times…
+            </p>
+          )}
           {result.status === 'error' && (
             <ErrorState title="We couldn't load the times." onRetry={result.retry}>
               Check your connection and try again.
             </ErrorState>
           )}
-          {result.status === 'ready' &&
-            (result.data.slots.length === 0 ? (
-              <div className="empty">
-                <Icon name="calendar" size={28} />
-                <p className="empty__title">No times this week.</p>
-                <p className="empty__body">New times are added regularly. Try the next week.</p>
-                <button type="button" className="button button--secondary" onClick={() => goTo(shiftWeek(week, 1))}>
-                  Show next week
-                </button>
-              </div>
-            ) : (
-              <WeekCalendar
-                dates={dates}
-                slots={result.data.slots}
-                timezone={result.data.timezone}
-                today={DateTime.now().setZone(result.data.timezone).toISODate()!}
-                openedUp={result.data.openedUp}
-              />
-            ))}
+          {shown && (
+            <div className={stale ? 'week-body week-body--stale' : 'week-body'}>
+              {shown.data.slots.length === 0 ? (
+                <div className="empty">
+                  <Icon name="calendar" size={28} />
+                  <p className="empty__title">No times this week.</p>
+                  <p className="empty__body">New times are added regularly. Try the next week.</p>
+                  <button type="button" className="button button--secondary" onClick={() => goTo(shiftWeek(week, 1))}>
+                    Show next week
+                  </button>
+                </div>
+              ) : (
+                <WeekCalendar
+                  dates={shown.dates}
+                  slots={shown.data.slots}
+                  timezone={shown.data.timezone}
+                  today={DateTime.now().setZone(shown.data.timezone).toISODate()!}
+                  openedUp={shown.data.openedUp}
+                />
+              )}
+            </div>
+          )}
         </section>
 
         <p className="credits">

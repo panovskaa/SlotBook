@@ -27,7 +27,7 @@ const wrapperBase = cn(
 
 // Tailwind's reset isn't loaded (see tailwind.css), so the browser's default input border and padding are cleared here.
 const inputBase =
-  'w-full border-0 bg-transparent p-0 font-[inherit] text-base text-foreground outline-none placeholder:text-foreground/40';
+  'smooth-input__field w-full border-0 bg-transparent p-0 font-[inherit] text-base text-foreground outline-none placeholder:text-foreground/40';
 
 type SmoothInputType = 'text' | 'password' | 'email';
 
