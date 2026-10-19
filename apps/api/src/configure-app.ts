@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
@@ -13,6 +14,9 @@ export const HOST_KEY_SECURITY = 'host-key';
 /** Everything main.ts sets up on the app, shared with the integration tests so they test the real thing. */
 export function configureApp(app: INestApplication, config: AppConfig): INestApplication {
   app.useLogger(app.get(Logger));
+  // Behind a proxy every request comes from the proxy's address. Trusting exactly N hops of
+  // X-Forwarded-For gives the real visitor IP for rate limits, without letting a client fake it.
+  if (config.trustProxy > 0) (app as NestExpressApplication).set('trust proxy', config.trustProxy);
   app.use(securityHeaders());
   app.enableCors({ origin: config.webOrigin, allowedHeaders: ['Content-Type', 'X-Host-Key', 'X-Request-Id'] });
   app.useGlobalPipes(createValidationPipe());

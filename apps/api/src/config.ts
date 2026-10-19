@@ -15,6 +15,11 @@ export interface AppConfig {
   smtpUrl?: string;
   /** Sender of confirmation emails. */
   mailFrom: string;
+  /**
+   * How many proxies sit in front of the API (Render, a load balancer). 0 = none, so the socket address
+   * is the client. Needed for per-visitor rate limits behind a proxy; check it with GET /health/ip.
+   */
+  trustProxy: number;
 }
 
 // Google closed gemini-2.5-flash-lite to new API keys; this is the free-tier model it recommends instead.
@@ -47,11 +52,19 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     geminiModel: env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
     smtpUrl: env.SMTP_URL || undefined,
     mailFrom: env.MAIL_FROM || DEFAULT_MAIL_FROM,
+    trustProxy: nonNegativeInt(env.TRUST_PROXY, 0, 'TRUST_PROXY'),
     rateLimit: {
       limit: positiveInt(env.RATE_LIMIT_MAX, 10, 'RATE_LIMIT_MAX'),
       windowMs: positiveInt(env.RATE_LIMIT_WINDOW_SECONDS, 60, 'RATE_LIMIT_WINDOW_SECONDS') * 1000,
     },
   };
+}
+
+function nonNegativeInt(value: string | undefined, fallback: number, name: string): number {
+  if (value === undefined || value === '') return fallback;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 0) throw new Error(`${name} must be a whole number, 0 or more`);
+  return n;
 }
 
 function positiveInt(value: string | undefined, fallback: number, name: string): number {

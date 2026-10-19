@@ -1,6 +1,6 @@
-import { Controller, Get, Res } from '@nestjs/common';
+import { Controller, Get, Req, Res } from '@nestjs/common';
 import { HealthResponse } from '@slotbook/shared';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApiTags } from '@nestjs/swagger';
 import { Doc } from '../common/docs';
@@ -21,5 +21,15 @@ export class HealthController {
       res.status(503);
       return { status: 'error', database: 'down' };
     }
+  }
+
+  /**
+   * The address the API sees for you, which is what rate limits count by. After deploying behind a
+   * proxy, open this and compare it with your real IP to check TRUST_PROXY.
+   */
+  @Doc('Shows the client IP the API sees (for checking TRUST_PROXY)', { 200: 'The IP' })
+  @Get('ip')
+  ip(@Req() req: Request): { ip: string } {
+    return { ip: req.ip ?? '' };
   }
 }

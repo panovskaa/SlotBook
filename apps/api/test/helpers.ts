@@ -33,7 +33,7 @@ export interface TestApp {
 /** Boots the real app (same pipes, filter and guards as main.ts) against the test database. */
 export async function createTestApp(
   now: string,
-  options: { llm?: LlmClient; mailer?: Mailer; rateLimit?: AppConfig['rateLimit'] } = {},
+  options: { llm?: LlmClient; mailer?: Mailer; rateLimit?: AppConfig['rateLimit']; trustProxy?: number } = {},
 ): Promise<TestApp> {
   const config: AppConfig = {
     databaseUrl: process.env.DATABASE_URL!,
@@ -42,6 +42,7 @@ export async function createTestApp(
     webOrigin: 'http://localhost:5173',
     port: 0,
     mailFrom: 'SlotBook <no-reply@slotbook.test>',
+    trustProxy: options.trustProxy ?? 0,
     // High by default so the concurrency tests aren't throttled; the rate-limit test sets its own.
     rateLimit: options.rateLimit ?? { limit: 100_000, windowMs: 60_000 },
   };

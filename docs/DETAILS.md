@@ -64,6 +64,7 @@ the public pages.
 | `RATE_LIMIT_MAX` | No | Requests allowed per window, per IP, for each of booking, cancelling and joining the waitlist. Default `10`. |
 | `RATE_LIMIT_WINDOW_SECONDS` | No | Length of that window. Default `60`. |
 | `SMTP_URL` | No | SMTP server for the confirmation email with the private cancellation link. `smtp://localhost:1025` is Mailpit from `docker-compose.yml`, which catches every email in a local inbox at http://localhost:8025. For real email use your provider, e.g. `smtps://user:password@smtp.example.com:465`. Empty means no emails. |
+| `TRUST_PROXY` | No | How many proxies sit in front of the API. Default `0` (none). Behind a host such as Render, set it so rate limits count each visitor instead of the proxy; `GET /health/ip` shows the IP the API sees, which must be your own. |
 | `MAIL_FROM` | No | Sender of those emails. Default `SlotBook <no-reply@slotbook.local>`. |
 | `VITE_HOST_NAME` | No | Web app only (put it in `apps/web/.env`). Names the host in the copy, as in "Office hours with Ada Lovelace". Without it the site just says "Office hours". |
 
@@ -193,6 +194,23 @@ To make CI a merge requirement, as NFR-8 asks, turn on branch protection for `ma
 - **A page goes blank during development with "X is not defined" in the console.** Vite's file
   watcher sometimes misses a save on Windows and keeps serving an old copy. Save the file again (or
   restart `npm run dev`).
+
+## Hosting it for free
+
+| Part | Service | Notes |
+|---|---|---|
+| Database | [Neon](https://neon.com) free Postgres | Doesn't expire. Use the **direct** (not pooled) connection string as `DATABASE_URL`. |
+| API | [Render](https://render.com) free web service | Sleeps after 15 idle minutes; the first request after that takes 30 to 60 seconds. Runs `prisma migrate deploy` on every start. |
+| Web app | Render free static site | Never sleeps. All paths rewrite to `index.html`. |
+| Email | [Brevo](https://www.brevo.com) free SMTP | 300 emails a day. Verify one sender address. |
+
+[`render.yaml`](../render.yaml) is a Render Blueprint that creates both Render services from this repo.
+Render asks for the secrets once (`DATABASE_URL`, `WEB_ORIGIN`, `SMTP_URL`, `MAIL_FROM`,
+`GEMINI_API_KEY`, `VITE_API_URL`) and generates `HOST_ACCESS_KEY`. After the first deploy, open
+`https://<api>/health/ip`: it must show your own IP. If it shows a different address, change
+`TRUST_PROXY` in the API's environment until it does.
+
+The production database starts empty; add slots from the host dashboard at `/host`.
 
 ## Project layout
 
