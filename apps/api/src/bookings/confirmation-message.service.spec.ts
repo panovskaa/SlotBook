@@ -4,7 +4,7 @@ import { ConfirmationMessageService, LLM_TIMEOUT_MS, clean, shorten } from './co
 
 const CONFIG = { timezone: 'Europe/Berlin' } as AppConfig;
 const STARTS_AT = new Date('2026-11-03T10:00:00Z'); // Tuesday 3 November, 11:00 in Berlin
-const TEMPLATE = "Thanks, Ada. You're booked for Tuesday 3 November at 11:00. See you then.";
+const TEMPLATE = "Thanks, Ada. You're booked for office hours on Tuesday 3 November at 11:00. See you then.";
 
 const fakeLlm = (impl: LlmClient['generate']) => ({ generate: jest.fn(impl) });
 

@@ -1321,3 +1321,64 @@ html {
 .expanding-link:hover {
   background: var(--accent-hover);
 }
+
+/* Hero text: a one-line headline on wider screens, a wide intro, and the session facts in a row. */
+.hero-eyebrow {
+  margin: 0 0 var(--space-2);
+  padding: 4px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-subtle);
+  color: var(--accent-text);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+/* Always one line: the headline is about 10x its font size wide, so it scales with the screen. */
+.hero-title {
+  max-width: none;
+  margin-bottom: var(--space-2);
+  white-space: nowrap;
+  font-size: clamp(1.75rem, calc(9.6vw - 4px), 5.5rem);
+}
+.hero-lede {
+  max-width: 62ch;
+  font-size: 1.1875rem;
+}
+.hero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1) var(--space-3);
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+}
+.hero-facts li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.hero-facts li::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+@media (max-width: 767px) {
+  .hero-lede {
+    font-size: 1.0625rem;
+  }
+  .hero-facts {
+    gap: 6px var(--space-2);
+    font-size: 0.875rem;
+  }
+}
+
+.summary__what {
+  margin: 0 0 4px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--accent-text);
+}

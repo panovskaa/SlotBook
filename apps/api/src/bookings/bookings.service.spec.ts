@@ -139,7 +139,7 @@ describe('ConfirmationMessageService template', () => {
 
   it('uses only the first name and the local date and time', () => {
     expect(messages.template('  Ada  Lovelace ', STARTS_AT)).toBe(
-      "Thanks, Ada. You're booked for Tuesday 3 November at 11:00. See you then.",
+      "Thanks, Ada. You're booked for office hours on Tuesday 3 November at 11:00. See you then.",
     );
   });
 

@@ -3,7 +3,7 @@ import { LlmClient } from '../src/llm/llm-client';
 import { TestApp, createTestApp, resetDatabase } from './helpers';
 
 const NOW = '2026-11-02T08:00:00.000Z';
-const TEMPLATE = "Thanks, Ada. You're booked for Tuesday 3 November at 11:00. See you then.";
+const TEMPLATE = "Thanks, Ada. You're booked for office hours on Tuesday 3 November at 11:00. See you then.";
 
 /** FR-11 acceptance: whatever the LLM does, the booking succeeds and gets a message under 300 characters. */
 describe('AI confirmation message (FR-11)', () => {

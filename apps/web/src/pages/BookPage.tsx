@@ -4,6 +4,7 @@ import { ApiRequestError, api } from '../api/client';
 import { BookingForm, problemFromApiError } from '../booking/BookingForm';
 import type { BookingFormValues } from '../booking/schema';
 import { Icon } from '../components/Icon';
+import { OFFERING } from '../content';
 import { ErrorState, LoadingState } from '../components/States';
 import { formatDuration, formatLongDate, formatTime } from '../lib/format';
 import { useApi } from '../lib/useApi';
@@ -55,6 +56,7 @@ export function BookPage() {
       {result.status === 'ready' && (
         <>
           <div className="summary">
+            <p className="summary__what">{OFFERING.title}</p>
             <p className="summary__date">{formatLongDate(result.data.slot.startsAt, result.data.timezone)}</p>
             <p className="summary__time">
               {formatTime(result.data.slot.startsAt, result.data.timezone)} –{' '}

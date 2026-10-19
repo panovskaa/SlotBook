@@ -8,7 +8,7 @@ export const MESSAGE_MAX_LENGTH = 300;
 export const LLM_TIMEOUT_MS = 3_000;
 
 const SYSTEM_PROMPT = [
-  'You write the short confirmation shown to someone who has just booked an appointment.',
+  'You write the short confirmation shown to someone who has just booked a one-to-one office-hours session.',
   'Write one or two warm, natural sentences in English, under 250 characters.',
   'Mention the first name, the day and the time exactly as given. Invent nothing else.',
   'Plain text only: no markdown, no emojis, no quotes, no greeting line, no sign-off.',
@@ -63,7 +63,10 @@ export class ConfirmationMessageService {
 
   template(fullName: string, startsAt: Date): string {
     const { firstName, day, time } = this.parts(fullName, startsAt);
-    return shorten(`Thanks, ${firstName}. You're booked for ${day} at ${time}. See you then.`, MESSAGE_MAX_LENGTH);
+    return shorten(
+      `Thanks, ${firstName}. You're booked for office hours on ${day} at ${time}. See you then.`,
+      MESSAGE_MAX_LENGTH,
+    );
   }
 
   private parts(fullName: string, startsAt: Date) {

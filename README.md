@@ -63,6 +63,7 @@ the public pages.
 | `GEMINI_MODEL` | No | Which Gemini model to use. Default `gemini-3.5-flash-lite` (free tier, about 1 second per message). Older models such as `gemini-2.5-flash-lite` are closed to new API keys and answer 404. |
 | `RATE_LIMIT_MAX` | No | Requests allowed per window, per IP, for each of booking, cancelling and joining the waitlist. Default `10`. |
 | `RATE_LIMIT_WINDOW_SECONDS` | No | Length of that window. Default `60`. |
+| `VITE_HOST_NAME` | No | Web app only (put it in `apps/web/.env`). Names the host in the copy, as in "Office hours with Ada Lovelace". Without it the site just says "Office hours". |
 
 ## Try the API
 
@@ -199,6 +200,7 @@ apps/web         React + Vite web app
 packages/shared  Rules, error codes and API types used by both
 e2e              Playwright end-to-end and accessibility tests
 .github          CI workflow
+.claude/skills   Claude Code skills for this project (taste-skill set and Higgsfield)
 ```
 
 ## Decisions worth knowing
@@ -258,3 +260,5 @@ e2e              Playwright end-to-end and accessibility tests
 - **The private link is shown once.** It exists only in the booking response. Reloading the confirmation page falls back to the public lookup and says the link was shown once.
 - **Extra error code.** Unexpected server errors use `INTERNAL_ERROR`, which isn't in the SRS list. It should never appear in normal use.
 - **Package versions.** NestJS 11, Prisma 6, TypeScript 5.9 and Vite 7 are pinned on purpose instead of the newest majors, because they're well proven together.
+- **What is being booked.** The site is set up for office hours: short one-to-one sessions with one host. The wording lives in `apps/web/src/content.ts`, so it can be changed in one place.
+- **One skills folder.** The taste skills used to live in `.agents/skills` with links from `.claude/skills`. They are now real folders in `.claude/skills` only. `skills-lock.json` still records where they came from; running `npx skills update` may create `.agents` again.

@@ -42,7 +42,7 @@ describe('Bookings (FR-3, FR-4, FR-6)', () => {
         slot: { startsAt: '2026-11-03T10:00:00.000Z', endsAt: '2026-11-03T10:30:00.000Z' },
         manageToken: expect.stringMatching(/^[A-Za-z0-9_-]{43}$/),
         managePath: `/manage/${res.body.manageToken}`,
-        message: "Thanks, Ada. You're booked for Tuesday 3 November at 11:00. See you then.",
+        message: "Thanks, Ada. You're booked for office hours on Tuesday 3 November at 11:00. See you then.",
       });
     });
 

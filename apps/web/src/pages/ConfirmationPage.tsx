@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { Icon } from '../components/Icon';
+import { OFFERING } from '../content';
 import { PrivateLink } from '../components/PrivateLink';
 import { ErrorState, LoadingState } from '../components/States';
 import { formatLongDate, formatTime } from '../lib/format';
@@ -39,6 +40,10 @@ export function ConfirmationPage() {
         <p className="lede lede--tight">{booking.message}</p>
 
         <dl className="details">
+          <div>
+            <dt>What</dt>
+            <dd>{OFFERING.title}, one-to-one</dd>
+          </div>
           <div>
             <dt>When</dt>
             <dd>
