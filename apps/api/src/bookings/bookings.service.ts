@@ -8,6 +8,7 @@ import {
   isWithinBookingWindow,
   normalizeReference,
 } from '@slotbook/shared';
+import { BookingEmailService } from './booking-email.service';
 import { AppException } from '../common/app-exception';
 import { Clock } from '../common/clock';
 import { createSecretToken } from '../common/secret-token';
@@ -31,6 +32,7 @@ export class BookingsService {
     private readonly clock: Clock,
     private readonly references: ReferenceGenerator,
     private readonly messages: ConfirmationMessageService,
+    private readonly emails: BookingEmailService,
   ) {}
 
   /** FR-3, FR-4: exactly one of any number of simultaneous requests for a slot succeeds. */
@@ -43,7 +45,11 @@ export class BookingsService {
           (tx) => this.bookInTransaction(tx, dto, reference, secret.hash),
           TRANSACTION_OPTIONS,
         );
-        const message = await this.saveMessage(booking, slot);
+        // Both run after the commit and never fail the booking; they run side by side to keep it quick.
+        const [message, emailSent] = await Promise.all([
+          this.saveMessage(booking, slot),
+          this.emails.sendConfirmation(booking, slot, secret.token),
+        ]);
         return {
           reference: booking.reference,
           status: booking.status,
@@ -51,6 +57,7 @@ export class BookingsService {
           manageToken: secret.token,
           managePath: `/manage/${secret.token}`,
           message,
+          emailSent,
         };
       } catch (err) {
         const target = uniqueViolationTarget(err);

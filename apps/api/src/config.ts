@@ -11,10 +11,16 @@ export interface AppConfig {
   geminiModel?: string;
   /** NFR-4: requests per window, per IP, for each public write endpoint. */
   rateLimit: { limit: number; windowMs: number };
+  /** SMTP server for confirmation emails, e.g. smtp://localhost:1025 (Mailpit). Unset = no emails. */
+  smtpUrl?: string;
+  /** Sender of confirmation emails. */
+  mailFrom: string;
 }
 
 // Google closed gemini-2.5-flash-lite to new API keys; this is the free-tier model it recommends instead.
 export const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
+
+export const DEFAULT_MAIL_FROM = 'SlotBook <no-reply@slotbook.local>';
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
 
@@ -39,6 +45,8 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     port: Number(env.PORT ?? 3000),
     geminiApiKey: env.GEMINI_API_KEY || undefined,
     geminiModel: env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL,
+    smtpUrl: env.SMTP_URL || undefined,
+    mailFrom: env.MAIL_FROM || DEFAULT_MAIL_FROM,
     rateLimit: {
       limit: positiveInt(env.RATE_LIMIT_MAX, 10, 'RATE_LIMIT_MAX'),
       windowMs: positiveInt(env.RATE_LIMIT_WINDOW_SECONDS, 60, 'RATE_LIMIT_WINDOW_SECONDS') * 1000,

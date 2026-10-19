@@ -58,8 +58,10 @@ export function ConfirmationPage() {
         </dl>
 
         <PrivateLink path={booking.managePath} label="Private cancellation link">
-          Use it to cancel, up to an hour before the start. Keep it safe: it's shown only once, and anyone with the link
-          can cancel.
+          Use it to cancel, up to an hour before the start.{' '}
+          {booking.emailSent
+            ? "We've also emailed it to you, with your booking details. Anyone with the link can cancel, so keep it to yourself."
+            : "Copy it now: it's shown only once here, and anyone with the link can cancel."}
         </PrivateLink>
 
         <Link to="/" className="button button--secondary">
@@ -125,7 +127,7 @@ function ConfirmationLookup({
       </dl>
       {!cancelled && (
         <p className="muted-text">
-          The private cancellation link was shown once, right after booking. Use that link to cancel.
+          To cancel, use the private link from your confirmation email, or the one shown right after booking.
         </p>
       )}
       <Link to="/" className="button button--secondary">

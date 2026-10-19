@@ -36,7 +36,7 @@ The full requirements are in [SRS.md](SRS.md) and the visual design system in [D
 
 ```bash
 cp .env.example .env          # then set HOST_ACCESS_KEY to a long random value
-docker compose up -d          # Postgres 16 on localhost:5432
+docker compose up -d          # Postgres 16 on localhost:5432, Mailpit inbox on http://localhost:8025
 npm install
 npx prisma migrate dev        # creates the tables and constraints
 npm run seed                  # optional: two weeks of sample slots
@@ -63,6 +63,8 @@ the public pages.
 | `GEMINI_MODEL` | No | Which Gemini model to use. Default `gemini-3.5-flash-lite` (free tier, about 1 second per message). Older models such as `gemini-2.5-flash-lite` are closed to new API keys and answer 404. |
 | `RATE_LIMIT_MAX` | No | Requests allowed per window, per IP, for each of booking, cancelling and joining the waitlist. Default `10`. |
 | `RATE_LIMIT_WINDOW_SECONDS` | No | Length of that window. Default `60`. |
+| `SMTP_URL` | No | SMTP server for the confirmation email with the private cancellation link. `smtp://localhost:1025` is Mailpit from `docker-compose.yml`, which catches every email in a local inbox at http://localhost:8025. For real email use your provider, e.g. `smtps://user:password@smtp.example.com:465`. Empty means no emails. |
+| `MAIL_FROM` | No | Sender of those emails. Default `SlotBook <no-reply@slotbook.local>`. |
 | `VITE_HOST_NAME` | No | Web app only (put it in `apps/web/.env`). Names the host in the copy, as in "Office hours with Ada Lovelace". Without it the site just says "Office hours". |
 
 ## Try the API
@@ -257,7 +259,7 @@ e2e              Playwright end-to-end and accessibility tests
 - **Extra error codes.** FR-9 gives status codes but no error codes, so the waitlist adds `ALREADY_ON_WAITLIST` (409) and `DATE_HAS_AVAILABILITY` (422). Rate limiting adds `RATE_LIMITED` (429).
 - **Extra endpoint.** `GET /slots/:id` isn't in the SRS list. The booking page needs it to load its slot when someone opens a `/book/:slotId` link directly.
 - **"This week" before the first response.** The browser doesn't know the app's time zone until the first slot list arrives, so it uses its own zone to pick the opening week. This only matters around midnight on Sunday.
-- **The private link is shown once.** It exists only in the booking response. Reloading the confirmation page falls back to the public lookup and says the link was shown once.
+- **The private link is shown once, and emailed.** On screen it exists only in the booking response; it is also emailed to the booker with the reference and time. The email is sent after the booking is saved and never fails it: if the mail server is down or slow (6-second limit), the booking still succeeds, `emailSent` is false and the page asks the visitor to copy the link. The database keeps only a hash of the token, so the link can't be sent again later.
 - **Extra error code.** Unexpected server errors use `INTERNAL_ERROR`, which isn't in the SRS list. It should never appear in normal use.
 - **Package versions.** NestJS 11, Prisma 6, TypeScript 5.9 and Vite 7 are pinned on purpose instead of the newest majors, because they're well proven together.
 - **What is being booked.** The site is set up for office hours: short one-to-one sessions with one host. The wording lives in `apps/web/src/content.ts`, so it can be changed in one place.

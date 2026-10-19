@@ -3,6 +3,7 @@ import { Clock } from '../common/clock';
 import { AppConfig } from '../config';
 import { PrismaService } from '../prisma/prisma.service';
 import { BookingsService, uniqueViolationTarget } from './bookings.service';
+import { BookingEmailService } from './booking-email.service';
 import { ConfirmationMessageService } from './confirmation-message.service';
 import { ReferenceGenerator } from './reference.generator';
 
@@ -55,7 +56,8 @@ function setup(options: { minutesBefore?: number; createErrors?: Error[]; refere
   const generator = { next: jest.fn(() => refs.shift()!) } as unknown as ReferenceGenerator;
   const clock = new FixedClock(new Date(STARTS_AT.getTime() - (options.minutesBefore ?? 120) * 60_000));
   const messages = new ConfirmationMessageService({ timezone: 'Europe/Berlin' } as AppConfig);
-  const service = new BookingsService(prisma, clock, generator, messages);
+  const emails = new BookingEmailService({ timezone: 'Europe/Berlin' } as AppConfig, null);
+  const service = new BookingsService(prisma, clock, generator, messages, emails);
   return { service, tx, prisma, created, generator };
 }
 

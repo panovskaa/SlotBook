@@ -52,7 +52,7 @@ export interface BookedSlot {
   endsAt: string;
 }
 
-/** Returned once, right after booking. The manage token is never shown again. */
+/** Returned once, right after booking. The manage token is never shown on screen again; it is also emailed. */
 export interface CreateBookingResponse {
   /** XXXX-XXXX */
   reference: string;
@@ -64,6 +64,8 @@ export interface CreateBookingResponse {
   managePath: string;
   /** Friendly confirmation message (FR-11) */
   message: string;
+  /** Whether the confirmation, with the private cancellation link, was emailed to the visitor */
+  emailSent: boolean;
 }
 
 /** GET /bookings/ref/:code — public, so it carries no personal data (FR-6). */

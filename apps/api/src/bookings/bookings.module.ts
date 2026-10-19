@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { APP_CONFIG, AppConfig, DEFAULT_GEMINI_MODEL } from '../config';
+import { MAILER, SmtpMailer } from '../mail/mailer';
 import { GeminiClient } from '../llm/gemini.client';
 import { LLM_CLIENT } from '../llm/llm-client';
+import { BookingEmailService } from './booking-email.service';
 import { BookingsController } from './bookings.controller';
 import { BookingsService } from './bookings.service';
 import { ConfirmationMessageService } from './confirmation-message.service';
@@ -13,6 +15,13 @@ import { ReferenceGenerator } from './reference.generator';
     BookingsService,
     ReferenceGenerator,
     ConfirmationMessageService,
+    BookingEmailService,
+    {
+      // Without SMTP_URL there is no mailer and the confirmation email is skipped.
+      provide: MAILER,
+      inject: [APP_CONFIG],
+      useFactory: (config: AppConfig) => (config.smtpUrl ? new SmtpMailer(config.smtpUrl, config.mailFrom) : null),
+    },
     {
       // FR-11 is optional: without GEMINI_API_KEY there's no client and the template is used.
       provide: LLM_CLIENT,
