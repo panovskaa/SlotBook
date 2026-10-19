@@ -70,7 +70,8 @@ export class InsightsService {
     return {
       timezone: tz,
       totalBookings: heatmap.reduce((sum, c) => sum + c.bookings, 0),
-      hourRange: hours.from_hour === null || hours.to_hour === null ? null : { from: hours.from_hour, to: hours.to_hour },
+      hourRange:
+        hours.from_hour === null || hours.to_hour === null ? null : { from: hours.from_hour, to: hours.to_hour },
       heatmap,
       topSlots,
       weekdayRates: ([1, 2, 3, 4, 5, 6, 7] as IsoWeekday[]).map((weekday) => {

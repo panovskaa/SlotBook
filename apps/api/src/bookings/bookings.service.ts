@@ -131,7 +131,7 @@ function slotTaken(): AppException {
 export function uniqueViolationTarget(err: unknown): 'reference' | 'token' | 'slot' | null {
   if (!(err instanceof Prisma.PrismaClientKnownRequestError) || err.code !== 'P2002') return null;
   const raw = err.meta?.target;
-  const target = (Array.isArray(raw) ? raw.join(',') : String(raw ?? '')).toLowerCase();
+  const target = (Array.isArray(raw) ? raw.join(',') : typeof raw === 'string' ? raw : '').toLowerCase();
   if (target.includes('reference')) return 'reference';
   if (target.includes('cancel_token_hash') || target.includes('canceltokenhash')) return 'token';
   // Anything else is the one-confirmed-booking-per-slot index.

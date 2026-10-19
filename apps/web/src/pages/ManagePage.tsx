@@ -67,7 +67,11 @@ function ManageBooking({ token, initial }: { token: string; initial: ManageBooki
         setStep('idle');
         return;
       }
-      setProblem(e.status === 0 ? "We couldn't reach the server. Check your connection and try again." : 'Something went wrong. Please try again.');
+      setProblem(
+        e.status === 0
+          ? "We couldn't reach the server. Check your connection and try again."
+          : 'Something went wrong. Please try again.',
+      );
       setStep('confirming');
     }
   };
@@ -121,7 +125,9 @@ function ManageBooking({ token, initial }: { token: string; initial: ManageBooki
           <h2 id="cancel-heading" className="cancel-box__title">
             Can't make it?
           </h2>
-          <p className="cancel-box__body">You can cancel until 1 hour before the start. The time then opens up for someone else.</p>
+          <p className="cancel-box__body">
+            You can cancel until 1 hour before the start. The time then opens up for someone else.
+          </p>
           <button type="button" className="button button--danger" onClick={() => setStep('confirming')}>
             Cancel booking
           </button>
@@ -141,7 +147,12 @@ function ManageBooking({ token, initial }: { token: string; initial: ManageBooki
             </p>
           )}
           <div className="cancel-box__actions">
-            <button type="button" className="button button--danger-solid" onClick={cancel} disabled={step === 'cancelling'}>
+            <button
+              type="button"
+              className="button button--danger-solid"
+              onClick={cancel}
+              disabled={step === 'cancelling'}
+            >
               {step === 'cancelling' ? (
                 <>
                   <span className="spinner spinner--on-accent" aria-hidden="true" /> Cancelling…
@@ -150,7 +161,12 @@ function ManageBooking({ token, initial }: { token: string; initial: ManageBooki
                 'Yes, cancel booking'
               )}
             </button>
-            <button type="button" className="button button--secondary" onClick={() => setStep('idle')} disabled={step === 'cancelling'}>
+            <button
+              type="button"
+              className="button button--secondary"
+              onClick={() => setStep('idle')}
+              disabled={step === 'cancelling'}
+            >
               Keep booking
             </button>
           </div>

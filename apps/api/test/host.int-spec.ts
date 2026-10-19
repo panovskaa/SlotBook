@@ -172,7 +172,11 @@ describe('Host dashboard (FR-8)', () => {
     it('frees the time for a new slot', async () => {
       const s = await slot('2026-11-03T09:00:00Z');
       await host('delete', `/host/slots/${s.id}`).expect(204);
-      const res = await host('post', '/host/slots').send({ date: '2026-11-03', startTime: '10:00', durationMinutes: 30 });
+      const res = await host('post', '/host/slots').send({
+        date: '2026-11-03',
+        startTime: '10:00',
+        durationMinutes: 30,
+      });
       expect(res.status).toBe(201);
     });
 
@@ -206,7 +210,9 @@ describe('Host dashboard (FR-8)', () => {
         const s = await slot(new Date(Date.parse('2026-11-10T00:00:00Z') + round * 3_600_000).toISOString());
         const [del, book] = await Promise.all([
           host('delete', `/host/slots/${s.id}`),
-          http().post('/bookings').send({ slotId: s.id, name: 'Racer', email: `racer${round}@example.com` }),
+          http()
+            .post('/bookings')
+            .send({ slotId: s.id, name: 'Racer', email: `racer${round}@example.com` }),
         ]);
         const status = (await t.prisma.slot.findUniqueOrThrow({ where: { id: s.id } })).status;
         const bookings = await t.prisma.booking.count({ where: { slotId: s.id } });
@@ -226,12 +232,18 @@ describe('Host dashboard (FR-8)', () => {
 
   describe('creating slots', () => {
     it('announces a new bookable slot to the waitlist', async () => {
-      const res = await host('post', '/host/slots').send({ date: '2026-11-03', startTime: '10:00', durationMinutes: 30 });
+      const res = await host('post', '/host/slots').send({
+        date: '2026-11-03',
+        startTime: '10:00',
+        durationMinutes: 30,
+      });
       expect(events).toEqual([{ slotId: res.body.id, startsAt: new Date('2026-11-03T09:00:00Z') }]);
     });
 
     it('stays quiet for a slot already inside the booking cutoff', async () => {
-      await host('post', '/host/slots').send({ date: '2026-11-02', startTime: '09:15', durationMinutes: 30 }).expect(201);
+      await host('post', '/host/slots')
+        .send({ date: '2026-11-02', startTime: '09:15', durationMinutes: 30 })
+        .expect(201);
       expect(events).toEqual([]);
     });
   });

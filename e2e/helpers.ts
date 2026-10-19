@@ -23,12 +23,15 @@ export function daysFromNow(days: number): DateTime {
 /** The ?week= value that shows a date in the calendar. */
 export const weekParam = (date: DateTime) => `${date.weekYear}-W${String(date.weekNumber).padStart(2, '0')}`;
 
-async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function api<T>(
+  path: string,
+  init: Omit<RequestInit, 'headers'> & { headers?: Record<string, string> } = {},
+): Promise<T> {
   const res = await fetch(API_URL + path, {
     ...init,
     headers: { 'Content-Type': 'application/json', ...init.headers },
   });
-  const body = res.status === 204 ? null : await res.json();
+  const body: unknown = res.status === 204 ? null : await res.json();
   if (!res.ok) throw new Error(`${init.method ?? 'GET'} ${path} → ${res.status}: ${JSON.stringify(body)}`);
   return body as T;
 }
@@ -64,7 +67,9 @@ export function cancelBooking(token: string) {
  */
 export async function expectAccessibleAndFits(page: Page): Promise<void> {
   const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
-  const violations = results.violations.map((v) => `${v.id} (${v.impact}): ${v.help} → ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`);
+  const violations = results.violations.map(
+    (v) => `${v.id} (${v.impact}): ${v.help} → ${v.nodes.map((n) => n.target.join(' ')).join(', ')}`,
+  );
   expect(violations, 'axe violations').toEqual([]);
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

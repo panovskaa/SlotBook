@@ -10,7 +10,15 @@ export function LoadingState({ label }: { label: string }) {
   );
 }
 
-export function ErrorState({ title, children, onRetry }: { title: string; children?: ReactNode; onRetry?: () => void }) {
+export function ErrorState({
+  title,
+  children,
+  onRetry,
+}: {
+  title: string;
+  children?: ReactNode;
+  onRetry?: () => void;
+}) {
   return (
     <div className="notice notice--error" role="alert">
       <Icon name="alert" />

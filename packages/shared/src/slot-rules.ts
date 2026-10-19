@@ -58,12 +58,7 @@ export function formatReference(code: string): string {
  * and with the look-alikes Crockford allows (O → 0, I and L → 1). Returns null if it can't be one.
  */
 export function normalizeReference(input: string): string | null {
-  const code = input
-    .trim()
-    .toUpperCase()
-    .replace(/[-\s]/g, '')
-    .replace(/O/g, '0')
-    .replace(/[IL]/g, '1');
+  const code = input.trim().toUpperCase().replace(/[-\s]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1');
   if (code.length !== REFERENCE_LENGTH) return null;
   for (const ch of code) if (!REFERENCE_ALPHABET.includes(ch)) return null;
   return formatReference(code);

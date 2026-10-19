@@ -51,8 +51,8 @@ export function WaitlistStatusPage() {
             A slot opened up!
           </h1>
           <p className="lede lede--tight">
-            There {open.length === 1 ? 'is a free slot' : `are ${open.length} free slots`} on {dateLabel}. Book quickly: the
-            first person to book gets it.
+            There {open.length === 1 ? 'is a free slot' : `are ${open.length} free slots`} on {dateLabel}. Book quickly:
+            the first person to book gets it.
           </p>
           <ul className="open-slots">
             {open.map((s) => (
@@ -63,7 +63,8 @@ export function WaitlistStatusPage() {
                       {formatTime(s.startsAt, entry.timezone)} – {formatTime(s.endsAt, entry.timezone)}
                     </span>
                     <span className="visually-hidden">
-                      Book {formatTime(s.startsAt, entry.timezone)} to {formatTime(s.endsAt, entry.timezone)}, {dateLabel},
+                      Book {formatTime(s.startsAt, entry.timezone)} to {formatTime(s.endsAt, entry.timezone)},{' '}
+                      {dateLabel},
                     </span>
                   </span>
                   <span className="slot__meta">{formatDuration(s.durationMinutes)}</span>
@@ -121,7 +122,9 @@ export function WaitlistStatusPage() {
         <div>
           <dt>Status</dt>
           <dd>
-            <span className={`badge badge--${entry.status === 'NOTIFIED' ? 'available' : entry.status === 'WAITING' ? 'unavailable' : 'cancelled'}`}>
+            <span
+              className={`badge badge--${entry.status === 'NOTIFIED' ? 'available' : entry.status === 'WAITING' ? 'unavailable' : 'cancelled'}`}
+            >
               <Icon name={entry.status === 'NOTIFIED' ? 'check' : 'clock'} size={14} />
               {entry.status === 'NOTIFIED' ? 'Slot opened up' : entry.status === 'WAITING' ? 'Waiting' : 'Closed'}
             </span>

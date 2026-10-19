@@ -86,7 +86,12 @@ function Heatmap({ data }: { data: InsightsResponse }) {
                       onMouseEnter={(e) => {
                         const box = e.currentTarget.getBoundingClientRect();
                         const wrap = e.currentTarget.closest('.heatmap-wrap')!.getBoundingClientRect();
-                        setHover({ weekday: d, hour: h, x: box.left - wrap.left + box.width / 2, y: box.top - wrap.top });
+                        setHover({
+                          weekday: d,
+                          hour: h,
+                          x: box.left - wrap.left + box.width / 2,
+                          y: box.top - wrap.top,
+                        });
                       }}
                     />
                   );
@@ -111,7 +116,11 @@ function Heatmap({ data }: { data: InsightsResponse }) {
               <span key={c} className="heatmap__swatch" style={{ background: c }} />
             ))}
             <span>More</span>
-            {max > 0 && <span className="heatmap__max">Darkest: {max} booking{max === 1 ? '' : 's'}</span>}
+            {max > 0 && (
+              <span className="heatmap__max">
+                Darkest: {max} booking{max === 1 ? '' : 's'}
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -144,7 +153,6 @@ function Heatmap({ data }: { data: InsightsResponse }) {
     </section>
   );
 }
-
 
 function TopSlots({ data }: { data: InsightsResponse }) {
   return (
@@ -186,7 +194,9 @@ function WeekdayRates({ data }: { data: InsightsResponse }) {
           <li key={r.weekday} className="rates__row">
             <span className="rates__day">{shortDay(r.weekday)}</span>
             <span className="rates__track" aria-hidden="true">
-              {r.rate !== null && r.rate > 0 && <span className="rates__bar" style={{ width: `${Math.round(r.rate * 100)}%` }} />}
+              {r.rate !== null && r.rate > 0 && (
+                <span className="rates__bar" style={{ width: `${Math.round(r.rate * 100)}%` }} />
+              )}
             </span>
             <span className="rates__value">
               <span className="visually-hidden">{dayName(r.weekday)}: </span>

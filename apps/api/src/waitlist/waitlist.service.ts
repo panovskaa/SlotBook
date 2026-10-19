@@ -40,7 +40,11 @@ export class WaitlistService {
       ]);
     }
     if ((await this.bookableSlots(dto.date, now)).length > 0) {
-      throw new AppException(422, ErrorCode.DATE_HAS_AVAILABILITY, 'This date still has open slots, so you can book one now');
+      throw new AppException(
+        422,
+        ErrorCode.DATE_HAS_AVAILABILITY,
+        'This date still has open slots, so you can book one now',
+      );
     }
 
     const secret = createSecretToken();
@@ -51,7 +55,11 @@ export class WaitlistService {
       });
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
-        throw new AppException(409, ErrorCode.ALREADY_ON_WAITLIST, 'This email is already on the waitlist for this date');
+        throw new AppException(
+          409,
+          ErrorCode.ALREADY_ON_WAITLIST,
+          'This email is already on the waitlist for this date',
+        );
       }
       throw err;
     }

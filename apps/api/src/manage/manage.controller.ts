@@ -17,7 +17,12 @@ export class ManageController {
     return this.manage.view(token);
   }
 
-  @Doc('Cancel a booking (rate-limited)', { 200: 'Cancelled, or already cancelled', 404: 'NOT_FOUND', 422: 'CANCELLATION_CUTOFF', 429: 'RATE_LIMITED' })
+  @Doc('Cancel a booking (rate-limited)', {
+    200: 'Cancelled, or already cancelled',
+    404: 'NOT_FOUND',
+    422: 'CANCELLATION_CUTOFF',
+    429: 'RATE_LIMITED',
+  })
   @Post('cancel')
   @UseGuards(ThrottlerGuard)
   @HttpCode(200)

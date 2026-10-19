@@ -39,7 +39,9 @@ export function CalendarPage() {
     <>
       <section className="intro">
         <h1 className="display">Find a time that works.</h1>
-        <p className="lede">Pick an open slot below. Booking takes less than a minute, and you can cancel up to an hour before.</p>
+        <p className="lede">
+          Pick an open slot below. Booking takes less than a minute, and you can cancel up to an hour before.
+        </p>
       </section>
 
       <section className="panel" aria-labelledby="week-heading">
@@ -65,7 +67,12 @@ export function CalendarPage() {
             >
               <Icon name="chevronLeft" />
             </button>
-            <button type="button" className="icon-button" onClick={() => goTo(shiftWeek(week, 1))} aria-label="Next week">
+            <button
+              type="button"
+              className="icon-button"
+              onClick={() => goTo(shiftWeek(week, 1))}
+              aria-label="Next week"
+            >
               <Icon name="chevronRight" />
             </button>
           </div>

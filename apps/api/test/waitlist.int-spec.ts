@@ -21,7 +21,10 @@ describe('Waitlist (FR-9)', () => {
   });
 
   const http = () => request(t.app.getHttpServer());
-  const join = (body: object) => http().post('/waitlist').send({ date: DATE, name: 'Ada Lovelace', email: 'ada@example.com', ...body });
+  const join = (body: object) =>
+    http()
+      .post('/waitlist')
+      .send({ date: DATE, name: 'Ada Lovelace', email: 'ada@example.com', ...body });
 
   async function slotAt(startsAt: string) {
     return t.prisma.slot.create({
@@ -123,7 +126,11 @@ describe('Waitlist (FR-9)', () => {
       for (const token of ['a'.repeat(43), 'nope']) {
         const res = await status(token);
         expect(res.status).toBe(404);
-        expect(res.body).toEqual({ statusCode: 404, code: 'NOT_FOUND', message: 'This link does not match a waitlist entry' });
+        expect(res.body).toEqual({
+          statusCode: 404,
+          code: 'NOT_FOUND',
+          message: 'This link does not match a waitlist entry',
+        });
       }
     });
   });
@@ -171,7 +178,10 @@ describe('Waitlist (FR-9)', () => {
       await fullyBookedDate();
       await join({}).expect(201);
       const other = await slotAt('2026-11-04T09:00:00Z');
-      const { body } = await http().post('/bookings').send({ slotId: other.id, name: 'Linus', email: 'l@example.com' }).expect(201);
+      const { body } = await http()
+        .post('/bookings')
+        .send({ slotId: other.id, name: 'Linus', email: 'l@example.com' })
+        .expect(201);
       await http().post(`/manage/${body.manageToken}/cancel`).expect(200);
       expect(await entryStatus()).toBe('WAITING');
     });

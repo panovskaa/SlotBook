@@ -48,13 +48,9 @@ function setup(rows: WaitlistEntry[]) {
   const sent: OutgoingEmail[] = [];
   const mailer = { send: async (e: OutgoingEmail) => void sent.push(e) } as DevMailer;
   const prisma = { waitlistEntry: table } as unknown as PrismaService;
-  const service = new WaitlistService(
-    prisma,
-    new FixedClock(),
-    {} as SlotsService,
-    mailer,
-    { timezone: 'Europe/Berlin' } as AppConfig,
-  );
+  const service = new WaitlistService(prisma, new FixedClock(), {} as SlotsService, mailer, {
+    timezone: 'Europe/Berlin',
+  } as AppConfig);
   return { table, sent, listener: new WaitlistListener(service) };
 }
 
@@ -95,6 +91,8 @@ describe('WaitlistListener (in-memory)', () => {
     table.updateManyAndReturn = async () => {
       throw new Error('database down');
     };
-    await expect(listener.handle({ slotId: 's1', startsAt: new Date('2026-11-03T09:00:00Z') })).resolves.toBeUndefined();
+    await expect(
+      listener.handle({ slotId: 's1', startsAt: new Date('2026-11-03T09:00:00Z') }),
+    ).resolves.toBeUndefined();
   });
 });

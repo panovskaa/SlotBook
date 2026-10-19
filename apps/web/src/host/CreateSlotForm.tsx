@@ -48,7 +48,10 @@ export function CreateSlotForm({ api, timezone, onCreated, onUnauthorized }: Pro
       onCreated(`Slot added: ${label}`);
     } catch (err) {
       const e = err instanceof ApiRequestError ? err : new ApiRequestError(0, null);
-      if (e.status === 401) return onUnauthorized();
+      if (e.status === 401) {
+        onUnauthorized();
+        return;
+      }
       if (e.code === 'SLOT_OVERLAP') {
         setError('startTime', { message: 'This overlaps a slot you already have' }, { shouldFocus: true });
       } else if (e.code === 'SLOT_IN_PAST') {
@@ -68,7 +71,7 @@ export function CreateSlotForm({ api, timezone, onCreated, onUnauthorized }: Pro
     errors[name] && (
       <p id={`slot-${name}-error`} className="field__error">
         <Icon name="alert" size={14} />
-        {errors[name]?.message}
+        {errors[name].message}
       </p>
     );
 

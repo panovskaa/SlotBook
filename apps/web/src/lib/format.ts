@@ -14,7 +14,12 @@ export const zonedDate = (iso: string, timezone: string) => zoned(iso, timezone)
 /** "Mon" and "19" for a YYYY-MM-DD date. */
 export function dayParts(date: string): { weekday: string; longWeekday: string; day: string; month: string } {
   const d = DateTime.fromISO(date, { locale: 'en-GB' });
-  return { weekday: d.toFormat('ccc'), longWeekday: d.toFormat('cccc'), day: d.toFormat('d'), month: d.toFormat('LLLL') };
+  return {
+    weekday: d.toFormat('ccc'),
+    longWeekday: d.toFormat('cccc'),
+    day: d.toFormat('d'),
+    month: d.toFormat('LLLL'),
+  };
 }
 
 export const formatDuration = (minutes: number) => {

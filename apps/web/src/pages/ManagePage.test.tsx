@@ -85,7 +85,11 @@ describe('ManagePage', () => {
 
   it('explains the cutoff when the server says it has passed', async () => {
     vi.mocked(api.cancel).mockRejectedValue(
-      new ApiRequestError(422, { statusCode: 422, code: 'CANCELLATION_CUTOFF', message: 'Cancellation closes 1 hour before start' }),
+      new ApiRequestError(422, {
+        statusCode: 422,
+        code: 'CANCELLATION_CUTOFF',
+        message: 'Cancellation closes 1 hour before start',
+      }),
     );
     renderPage();
     await userEvent.click(await screen.findByRole('button', { name: 'Cancel booking' }));
@@ -113,7 +117,9 @@ describe('ManagePage', () => {
   });
 
   it('says plainly when the link matches nothing', async () => {
-    vi.mocked(api.manage).mockRejectedValue(new ApiRequestError(404, { statusCode: 404, code: 'NOT_FOUND', message: '' }));
+    vi.mocked(api.manage).mockRejectedValue(
+      new ApiRequestError(404, { statusCode: 404, code: 'NOT_FOUND', message: '' }),
+    );
     renderPage();
     expect(await screen.findByRole('alert')).toHaveTextContent("This link doesn't match a booking.");
   });

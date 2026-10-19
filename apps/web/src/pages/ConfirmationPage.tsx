@@ -27,7 +27,7 @@ export function ConfirmationPage() {
   // Move focus to the result so screen readers announce it (NFR-1).
   useEffect(() => headingRef.current?.focus(), []);
 
-  if (booking && booking.reference === ref) {
+  if (booking?.reference === ref) {
     return (
       <div className="narrow">
         <div className="success-mark" aria-hidden="true">
@@ -88,7 +88,10 @@ function ConfirmationLookup({
         <h1 className="page-title" tabIndex={-1} ref={headingRef}>
           Booking not found
         </h1>
-        <ErrorState title={result.error.status === 404 ? 'No booking has this reference.' : "We couldn't look up this booking."} onRetry={result.error.status === 404 ? undefined : result.retry}>
+        <ErrorState
+          title={result.error.status === 404 ? 'No booking has this reference.' : "We couldn't look up this booking."}
+          onRetry={result.error.status === 404 ? undefined : result.retry}
+        >
           <Link to="/">Go to the calendar</Link>
         </ErrorState>
       </div>
@@ -116,7 +119,9 @@ function ConfirmationLookup({
         </div>
       </dl>
       {!cancelled && (
-        <p className="muted-text">The private cancellation link was shown once, right after booking. Use that link to cancel.</p>
+        <p className="muted-text">
+          The private cancellation link was shown once, right after booking. Use that link to cancel.
+        </p>
       )}
       <Link to="/" className="button button--secondary">
         Back to all times

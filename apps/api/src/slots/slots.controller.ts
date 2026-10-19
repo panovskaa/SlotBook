@@ -14,7 +14,10 @@ import { HOST_KEY_SECURITY } from '../configure-app';
 export class SlotsController {
   constructor(private readonly slots: SlotsService) {}
 
-  @Doc('Slots in a date range, each with its state (public)', { 200: 'Slots that have not started', 400: 'VALIDATION_ERROR' })
+  @Doc('Slots in a date range, each with its state (public)', {
+    200: 'Slots that have not started',
+    400: 'VALIDATION_ERROR',
+  })
   @Get()
   list(@Query() query: ListSlotsQuery): Promise<SlotsResponse> {
     return this.slots.list(query);
@@ -38,14 +41,25 @@ function notFound(): AppException {
 export class HostSlotsController {
   constructor(private readonly slots: SlotsService) {}
 
-  @Doc('Create a slot', { 201: 'Created', 400: 'VALIDATION_ERROR or SLOT_IN_PAST', 401: 'UNAUTHORIZED', 409: 'SLOT_OVERLAP' })
+  @Doc('Create a slot', {
+    201: 'Created',
+    400: 'VALIDATION_ERROR or SLOT_IN_PAST',
+    401: 'UNAUTHORIZED',
+    409: 'SLOT_OVERLAP',
+  })
   @Post()
   @HttpCode(201)
   create(@Body() dto: CreateSlotDto): Promise<SlotDto> {
     return this.slots.create(dto);
   }
 
-  @Doc('Delete a slot nobody has booked', { 204: 'Deleted', 400: 'SLOT_IN_PAST: already started', 401: 'UNAUTHORIZED', 404: 'NOT_FOUND', 409: 'SLOT_ALREADY_BOOKED' })
+  @Doc('Delete a slot nobody has booked', {
+    204: 'Deleted',
+    400: 'SLOT_IN_PAST: already started',
+    401: 'UNAUTHORIZED',
+    404: 'NOT_FOUND',
+    409: 'SLOT_ALREADY_BOOKED',
+  })
   @Delete(':id')
   @HttpCode(204)
   remove(@Param('id', new ParseUUIDPipe({ exceptionFactory: () => notFound() })) id: string): Promise<void> {

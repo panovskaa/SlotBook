@@ -12,11 +12,22 @@
     "seed": "npm run seed -w @slotbook/api",
     "test": "npm run build -w @slotbook/shared && npm run test --workspaces --if-present",
     "postinstall": "npm run build -w @slotbook/shared",
-    "test:e2e": "npm run test:e2e -w @slotbook/e2e"
+    "test:e2e": "npm run test:e2e -w @slotbook/e2e",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "@eslint/js": "9.39.5",
     "concurrently": "9.2.5",
-    "typescript": "5.9.3"
+    "eslint": "9.39.5",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.2"
   },
   "engines": {
     "node": ">=20"

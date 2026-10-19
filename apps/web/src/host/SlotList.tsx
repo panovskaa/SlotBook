@@ -51,7 +51,10 @@ export function SlotList({ api, timezone, version, bookings, onDeleted, onUnauth
       onDeleted(`Deleted ${formatTime(slot.startsAt, timezone)} on ${formatLongDate(slot.startsAt, timezone)}`);
     } catch (err) {
       const e = err instanceof ApiRequestError ? err : new ApiRequestError(0, null);
-      if (e.status === 401) return onUnauthorized();
+      if (e.status === 401) {
+        onUnauthorized();
+        return;
+      }
       setProblem({
         id: slot.id,
         message:
@@ -84,7 +87,10 @@ export function SlotList({ api, timezone, version, bookings, onDeleted, onUnauth
                     <span className="slot-row__time">{time}</span>
                     <span className="slot-row__length">{formatDuration(s.durationMinutes)}</span>
                     <span className={`badge badge--${s.state.toLowerCase()}`}>
-                      <Icon name={s.state === 'BOOKED' ? 'lock' : s.state === 'AVAILABLE' ? 'check' : 'clock'} size={14} />
+                      <Icon
+                        name={s.state === 'BOOKED' ? 'lock' : s.state === 'AVAILABLE' ? 'check' : 'clock'}
+                        size={14}
+                      />
                       {STATE_LABEL[s.state]}
                       {booker && <span className="slot-row__booker">· {booker}</span>}
                     </span>

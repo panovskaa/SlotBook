@@ -16,7 +16,7 @@ export class CreateBookingDto implements CreateBookingRequest {
   })
   name: string;
 
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
+  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
   @IsString()
   @MaxLength(EMAIL_MAX_LENGTH)
   @IsEmail({}, { message: 'email must be a valid email address' })

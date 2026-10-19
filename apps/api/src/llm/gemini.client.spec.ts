@@ -1,6 +1,7 @@
 import { GeminiClient } from './gemini.client';
 
-const ok = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } });
+const ok = (body: unknown) =>
+  new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
 describe('GeminiClient', () => {
   const signal = new AbortController().signal;
@@ -9,7 +10,7 @@ describe('GeminiClient', () => {
     const fetchMock = jest.fn(async () =>
       ok({ candidates: [{ content: { parts: [{ text: 'See you ' }, { text: 'Tuesday, Ada.' }] } }] }),
     );
-    const client = new GeminiClient('test-key', 'gemini-2.5-flash-lite', fetchMock as unknown as typeof fetch);
+    const client = new GeminiClient('test-key', 'gemini-2.5-flash-lite', fetchMock);
 
     await expect(client.generate({ system: 'Be kind.', prompt: 'First name: Ada', signal })).resolves.toBe(
       'See you Tuesday, Ada.',
@@ -29,12 +30,12 @@ describe('GeminiClient', () => {
   });
 
   it('throws on an error status, so the caller falls back', async () => {
-    const client = new GeminiClient('k', 'm', (async () => new Response('quota', { status: 429 })) as unknown as typeof fetch);
+    const client = new GeminiClient('k', 'm', async () => new Response('quota', { status: 429 }));
     await expect(client.generate({ system: '', prompt: '', signal })).rejects.toThrow('Gemini responded with 429');
   });
 
   it('throws when the answer has no text, e.g. when it was blocked', async () => {
-    const client = new GeminiClient('k', 'm', (async () => ok({ candidates: [] })) as unknown as typeof fetch);
+    const client = new GeminiClient('k', 'm', async () => ok({ candidates: [] }));
     await expect(client.generate({ system: '', prompt: '', signal })).rejects.toThrow('Gemini returned no text');
   });
 });

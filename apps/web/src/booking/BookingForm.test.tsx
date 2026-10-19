@@ -49,7 +49,9 @@ describe('BookingForm', () => {
   });
 
   it('replaces the form with a message and a way back when the slot is taken', async () => {
-    const onSubmit = vi.fn().mockResolvedValue(problemFromApiError(409, { statusCode: 409, code: 'SLOT_ALREADY_BOOKED', message: '' }));
+    const onSubmit = vi
+      .fn()
+      .mockResolvedValue(problemFromApiError(409, { statusCode: 409, code: 'SLOT_ALREADY_BOOKED', message: '' }));
     const { name, email, submit } = renderForm(onSubmit);
     await userEvent.type(name, 'Ada');
     await userEvent.type(email, 'ada@example.com');

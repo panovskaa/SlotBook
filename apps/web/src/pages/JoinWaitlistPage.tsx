@@ -21,7 +21,7 @@ export function JoinWaitlistPage() {
   const join = async (values: BookingFormValues): Promise<SubmitProblem | null> => {
     try {
       const res = await api.joinWaitlist({ date, ...values });
-      navigate(res.statusPath, { state: { justJoined: true } });
+      void navigate(res.statusPath, { state: { justJoined: true } });
       return null;
     } catch (err) {
       const e = err instanceof ApiRequestError ? err : new ApiRequestError(0, null);
@@ -32,9 +32,15 @@ export function JoinWaitlistPage() {
             body: 'Use the private link you got when you joined to check its status.',
           };
         case 'DATE_HAS_AVAILABILITY':
-          return { title: 'Good news: a slot is free on this date.', body: 'You can book it now instead.', final: true };
+          return {
+            title: 'Good news: a slot is free on this date.',
+            body: 'You can book it now instead.',
+            final: true,
+          };
         case 'VALIDATION_ERROR': {
-          const details = Array.isArray(e.body?.details) ? (e.body.details as { field: string; messages: string[] }[]) : [];
+          const details = Array.isArray(e.body?.details)
+            ? (e.body.details as { field: string; messages: string[] }[])
+            : [];
           if (details.some((d) => d.field === 'date')) return { title: 'This date has passed.', final: true };
           const fieldErrors: SubmitProblem['fieldErrors'] = {};
           for (const d of details) if (d.field === 'name' || d.field === 'email') fieldErrors[d.field] = d.messages[0];
@@ -55,8 +61,8 @@ export function JoinWaitlistPage() {
       </Link>
       <h1 className="page-title">Join the waitlist</h1>
       <p className="lede lede--tight">
-        {longWeekday} {day} {month} is fully booked. Leave your name and email, and your private link will show you as soon
-        as a slot opens up.
+        {longWeekday} {day} {month} is fully booked. Leave your name and email, and your private link will show you as
+        soon as a slot opens up.
       </p>
       <BookingForm
         onSubmit={join}

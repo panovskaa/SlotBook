@@ -23,7 +23,9 @@ export function BookPage() {
   const book = async (values: BookingFormValues) => {
     try {
       const booking = await api.book({ slotId, ...values });
-      navigate(`/confirmation/${booking.reference}`, { state: { booking, timezone: result.status === 'ready' ? result.data.timezone : undefined } });
+      void navigate(`/confirmation/${booking.reference}`, {
+        state: { booking, timezone: result.status === 'ready' ? result.data.timezone : undefined },
+      });
       return null;
     } catch (err) {
       const e = err instanceof ApiRequestError ? err : new ApiRequestError(0, null);
@@ -65,7 +67,11 @@ export function BookPage() {
             <BookingForm onSubmit={book} backTo={backTo} />
           ) : (
             <ErrorState
-              title={result.data.slot.state === 'BOOKED' ? 'This time is already booked.' : 'Booking for this time has closed.'}
+              title={
+                result.data.slot.state === 'BOOKED'
+                  ? 'This time is already booked.'
+                  : 'Booking for this time has closed.'
+              }
             >
               {result.data.slot.state === 'UNAVAILABLE' && 'Booking closes 30 minutes before start. '}
               <Link to={backTo}>Choose another time</Link>.

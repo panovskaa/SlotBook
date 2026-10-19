@@ -6,11 +6,11 @@ services:
       POSTGRES_PASSWORD: slotbook
       POSTGRES_DB: slotbook
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U slotbook"]
+      test: ['CMD-SHELL', 'pg_isready -U slotbook']
       interval: 2s
       timeout: 3s
       retries: 20

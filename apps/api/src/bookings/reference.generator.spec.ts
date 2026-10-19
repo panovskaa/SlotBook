@@ -15,7 +15,7 @@ describe('ReferenceGenerator', () => {
   it('uses the whole alphabet', () => {
     const seen = new Set<string>();
     for (let i = 0; i < 2000; i++) for (const ch of generator.next().replace('-', '')) seen.add(ch);
-    expect([...seen].sort().join('')).toBe([...REFERENCE_ALPHABET].sort().join(''));
+    expect([...seen].sort().join('')).toBe(REFERENCE_ALPHABET.split('').sort().join(''));
   });
 
   it('almost never repeats', () => {

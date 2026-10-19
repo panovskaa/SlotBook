@@ -2,7 +2,7 @@
 const common = {
   testEnvironment: 'node',
   transform: {
-    '^.+\.ts$': [
+    '^.+\\.ts$': [
       'ts-jest',
       {
         tsconfig: 'tsconfig.test.json',

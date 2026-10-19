@@ -35,7 +35,7 @@ function HostKeyForm({ rejected, onSubmit }: { rejected: boolean; onSubmit: (key
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(rejected ? "That key didn't work. Check it and try again." : null);
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.SyntheticEvent) => {
     e.preventDefault();
     const key = value.trim();
     if (!key) {

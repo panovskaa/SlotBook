@@ -59,7 +59,10 @@ function setUpDocs(app: INestApplication): void {
           'UNAUTHORIZED, plus ALREADY_ON_WAITLIST, DATE_HAS_AVAILABILITY, RATE_LIMITED and INTERNAL_ERROR.',
         ].join('\n'),
       )
-      .addApiKey({ type: 'apiKey', in: 'header', name: 'X-Host-Key', description: 'The HOST_ACCESS_KEY value' }, HOST_KEY_SECURITY)
+      .addApiKey(
+        { type: 'apiKey', in: 'header', name: 'X-Host-Key', description: 'The HOST_ACCESS_KEY value' },
+        HOST_KEY_SECURITY,
+      )
       .build(),
   );
   SwaggerModule.setup(DOCS_PATH, app, document, { jsonDocumentUrl: `${DOCS_PATH}-json` });

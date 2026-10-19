@@ -53,8 +53,20 @@ const bookings: HostBookingsResponse = {
 const slots: SlotsResponse = {
   timezone: TZ,
   slots: [
-    { id: 's-open', startsAt: '2030-01-08T08:00:00.000Z', endsAt: '2030-01-08T08:30:00.000Z', durationMinutes: 30, state: 'AVAILABLE' },
-    { id: 's-booked', startsAt: '2030-01-08T09:00:00.000Z', endsAt: '2030-01-08T09:30:00.000Z', durationMinutes: 30, state: 'BOOKED' },
+    {
+      id: 's-open',
+      startsAt: '2030-01-08T08:00:00.000Z',
+      endsAt: '2030-01-08T08:30:00.000Z',
+      durationMinutes: 30,
+      state: 'AVAILABLE',
+    },
+    {
+      id: 's-booked',
+      startsAt: '2030-01-08T09:00:00.000Z',
+      endsAt: '2030-01-08T09:30:00.000Z',
+      durationMinutes: 30,
+      state: 'BOOKED',
+    },
   ],
   openedUp: [],
 };
@@ -102,9 +114,16 @@ describe('Dashboard', () => {
 
   it('shows empty states, and no rate rather than 0 %', async () => {
     vi.mocked(publicApi.slots).mockResolvedValue({ timezone: TZ, slots: [], openedUp: [] });
-    renderDashboard(makeApi({ stats: vi.fn().mockResolvedValue(emptyStats), bookings: vi.fn().mockResolvedValue({ timezone: TZ, bookings: [] }) }));
+    renderDashboard(
+      makeApi({
+        stats: vi.fn().mockResolvedValue(emptyStats),
+        bookings: vi.fn().mockResolvedValue({ timezone: TZ, bookings: [] }),
+      }),
+    );
 
-    expect(await screen.findByText('No upcoming bookings yet. They\'ll appear here as people book.')).toBeInTheDocument();
+    expect(
+      await screen.findByText("No upcoming bookings yet. They'll appear here as people book."),
+    ).toBeInTheDocument();
     expect(await screen.findByText('No slots in the next two weeks. Add one above.')).toBeInTheDocument();
     const rate = screen.getByText('Booking rate, last 30 days').parentElement!;
     expect(within(rate).getByText('—')).toBeInTheDocument();
@@ -146,7 +165,9 @@ describe('Dashboard', () => {
 
   it('explains when a slot was booked just before deleting', async () => {
     const api = makeApi({
-      deleteSlot: vi.fn().mockRejectedValue(new ApiRequestError(409, { statusCode: 409, code: 'SLOT_ALREADY_BOOKED', message: '' })),
+      deleteSlot: vi
+        .fn()
+        .mockRejectedValue(new ApiRequestError(409, { statusCode: 409, code: 'SLOT_ALREADY_BOOKED', message: '' })),
     });
     renderDashboard(api);
     await userEvent.click((await screen.findAllByRole('button', { name: /^Delete / }))[0]);
@@ -156,14 +177,20 @@ describe('Dashboard', () => {
 
   it('goes back to the key screen when the key stops working', async () => {
     const { onUnauthorized } = renderDashboard(
-      makeApi({ stats: vi.fn().mockRejectedValue(new ApiRequestError(401, { statusCode: 401, code: 'UNAUTHORIZED', message: '' })) }),
+      makeApi({
+        stats: vi
+          .fn()
+          .mockRejectedValue(new ApiRequestError(401, { statusCode: 401, code: 'UNAUTHORIZED', message: '' })),
+      }),
     );
     await waitFor(() => expect(onUnauthorized).toHaveBeenCalled());
   });
 
   it('maps an overlap from the server onto the start time field', async () => {
     const api = makeApi({
-      createSlot: vi.fn().mockRejectedValue(new ApiRequestError(409, { statusCode: 409, code: 'SLOT_OVERLAP', message: '' })),
+      createSlot: vi
+        .fn()
+        .mockRejectedValue(new ApiRequestError(409, { statusCode: 409, code: 'SLOT_OVERLAP', message: '' })),
     });
     renderDashboard(api);
     await userEvent.clear(await screen.findByLabelText('Date'));

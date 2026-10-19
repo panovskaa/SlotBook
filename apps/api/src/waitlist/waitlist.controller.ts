@@ -11,7 +11,13 @@ import { Doc } from '../common/docs';
 export class WaitlistController {
   constructor(private readonly waitlist: WaitlistService) {}
 
-  @Doc('Join the waitlist for a fully booked date (rate-limited)', { 201: 'Joined: private status token', 400: 'VALIDATION_ERROR', 409: 'ALREADY_ON_WAITLIST', 422: 'DATE_HAS_AVAILABILITY', 429: 'RATE_LIMITED' })
+  @Doc('Join the waitlist for a fully booked date (rate-limited)', {
+    201: 'Joined: private status token',
+    400: 'VALIDATION_ERROR',
+    409: 'ALREADY_ON_WAITLIST',
+    422: 'DATE_HAS_AVAILABILITY',
+    429: 'RATE_LIMITED',
+  })
   @Post()
   @UseGuards(ThrottlerGuard)
   @HttpCode(201)

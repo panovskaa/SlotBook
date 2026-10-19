@@ -66,12 +66,21 @@ describe('Waitlist status page', () => {
       status: 'NOTIFIED',
       notifiedAt: '2026-11-02T09:00:00.000Z',
       availableSlots: [
-        { id: 's1', startsAt: '2026-11-03T09:00:00.000Z', endsAt: '2026-11-03T09:30:00.000Z', durationMinutes: 30, state: 'AVAILABLE' },
+        {
+          id: 's1',
+          startsAt: '2026-11-03T09:00:00.000Z',
+          endsAt: '2026-11-03T09:30:00.000Z',
+          durationMinutes: 30,
+          state: 'AVAILABLE',
+        },
       ],
     });
     renderAt(`/waitlist/${TOKEN}`);
     expect(await screen.findByRole('heading', { name: 'A slot opened up!' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /^Book 10:00 to 10:30, Tuesday 3 November/ })).toHaveAttribute('href', '/book/s1');
+    expect(screen.getByRole('link', { name: /^Book 10:00 to 10:30, Tuesday 3 November/ })).toHaveAttribute(
+      'href',
+      '/book/s1',
+    );
   });
 
   it('explains when the opened slot has been taken again', async () => {
@@ -95,7 +104,9 @@ describe('Waitlist status page', () => {
   });
 
   it('says plainly when the link matches nothing', async () => {
-    vi.mocked(api.waitlistStatus).mockRejectedValue(new ApiRequestError(404, { statusCode: 404, code: 'NOT_FOUND', message: '' }));
+    vi.mocked(api.waitlistStatus).mockRejectedValue(
+      new ApiRequestError(404, { statusCode: 404, code: 'NOT_FOUND', message: '' }),
+    );
     renderAt(`/waitlist/${TOKEN}`);
     expect(await screen.findByRole('alert')).toHaveTextContent("This link doesn't match a waitlist entry.");
   });
@@ -126,7 +137,11 @@ describe('Join the waitlist page', () => {
     expect(screen.getByText(/Tuesday 3 November is fully booked/)).toBeInTheDocument();
     await fillAndSubmit();
 
-    expect(api.joinWaitlist).toHaveBeenCalledWith({ date: '2026-11-03', name: 'Ada Lovelace', email: 'ada@example.com' });
+    expect(api.joinWaitlist).toHaveBeenCalledWith({
+      date: '2026-11-03',
+      name: 'Ada Lovelace',
+      email: 'ada@example.com',
+    });
     expect(await screen.findByRole('heading', { name: "You're on the waitlist." })).toBeInTheDocument();
   });
 

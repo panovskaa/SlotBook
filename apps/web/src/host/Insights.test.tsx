@@ -33,11 +33,17 @@ describe('Insights', () => {
   it('always has a data table with the same numbers as the heatmap', () => {
     render(<Insights data={data} />);
     const table = screen.getByRole('table', { name: 'Bookings by weekday and start hour' });
-    const headers = within(table).getAllByRole('columnheader').map((h) => h.textContent);
+    const headers = within(table)
+      .getAllByRole('columnheader')
+      .map((h) => h.textContent);
     expect(headers).toEqual(['Day', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00']);
 
     const monday = within(table).getByRole('row', { name: /Monday/ });
-    expect(within(monday).getAllByRole('cell').map((c) => c.textContent)).toEqual(['0', '3', '0', '0', '0', '0', '0']);
+    expect(
+      within(monday)
+        .getAllByRole('cell')
+        .map((c) => c.textContent),
+    ).toEqual(['0', '3', '0', '0', '0', '0', '0']);
     const thursday = within(table).getByRole('row', { name: /Thursday/ });
     expect(within(thursday).getAllByRole('cell')[5]).toHaveTextContent('2');
     expect(within(table).getAllByRole('row')).toHaveLength(8);

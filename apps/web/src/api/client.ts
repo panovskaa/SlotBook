@@ -33,14 +33,17 @@ export class ApiRequestError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+/** Like RequestInit, but headers are always a plain object so they can be merged. */
+type RequestOptions = Omit<RequestInit, 'headers'> & { headers?: Record<string, string> };
+
+async function request<T>(path: string, init?: RequestOptions): Promise<T> {
   let res: Response;
   try {
     res = await fetch(BASE + path, { ...init, headers: { 'Content-Type': 'application/json', ...init?.headers } });
   } catch {
     throw new ApiRequestError(0, null);
   }
-  const body = await res.json().catch(() => null);
+  const body: unknown = await res.json().catch(() => null);
   if (!res.ok) throw new ApiRequestError(res.status, body as ApiError | null);
   return body as T;
 }

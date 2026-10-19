@@ -28,7 +28,14 @@ describe('Insights (FR-10)', () => {
   async function booking(slotId: string, status: 'CONFIRMED' | 'CANCELLED' = 'CONFIRMED') {
     n++;
     await t.prisma.booking.create({
-      data: { slotId, name: 'X', email: `x${n}@example.com`, reference: `INS-${n}`, cancelTokenHash: `ins-${n}`, status },
+      data: {
+        slotId,
+        name: 'X',
+        email: `x${n}@example.com`,
+        reference: `INS-${n}`,
+        cancelTokenHash: `ins-${n}`,
+        status,
+      },
     });
   }
   const booked = async (startsAt: string) => booking((await slot(startsAt, 'BOOKED')).id);

@@ -156,7 +156,9 @@ describe('Slots (FR-1, FR-2, FR-5)', () => {
     });
 
     it('rejects a row that ends before it starts', async () => {
-      await expect(insert('2026-11-03T10:00:00Z', '2026-11-03T09:00:00Z')).rejects.toThrow(/slot_ends_after_start|23514/);
+      await expect(insert('2026-11-03T10:00:00Z', '2026-11-03T09:00:00Z')).rejects.toThrow(
+        /slot_ends_after_start|23514/,
+      );
     });
   });
 
@@ -225,14 +227,22 @@ describe('Slots (FR-1, FR-2, FR-5)', () => {
 
   describe('one slot', () => {
     it('returns the slot and the time zone', async () => {
-      const { body: created } = await createSlot({ date: '2026-11-03', startTime: '10:00', durationMinutes: 30 }).expect(201);
+      const { body: created } = await createSlot({
+        date: '2026-11-03',
+        startTime: '10:00',
+        durationMinutes: 30,
+      }).expect(201);
       const res = await request(t.app.getHttpServer()).get(`/slots/${created.id}`);
       expect(res.status).toBe(200);
       expect(res.body).toEqual({ timezone: 'Europe/Berlin', slot: created });
     });
 
     it('returns 404 for a deleted slot, a slot that has started and an unknown or malformed ID', async () => {
-      const { body: created } = await createSlot({ date: '2026-11-02', startTime: '10:00', durationMinutes: 30 }).expect(201);
+      const { body: created } = await createSlot({
+        date: '2026-11-02',
+        startTime: '10:00',
+        durationMinutes: 30,
+      }).expect(201);
       t.clock.set('2026-11-02T09:00:00Z');
       for (const id of [created.id, '3f1c2a9e-5b6d-4c7e-8f90-1a2b3c4d5e6f', 'not-a-uuid']) {
         const res = await request(t.app.getHttpServer()).get(`/slots/${id}`);

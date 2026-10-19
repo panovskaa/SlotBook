@@ -20,11 +20,11 @@ The full requirements are in [SRS.md](SRS.md) and the visual design system in [D
 | FR-8 Host dashboard | Done: `/host` with stats, upcoming bookings, adding slots and deleting free ones |
 | FR-9 Waitlist | Done: join from a fully booked day, private status link, `slot.available` listener, "A slot opened up!" in the calendar |
 | FR-10 Insights | Done: heatmap by weekday and hour with a data table, top 3 times, booking rate per weekday (on the dashboard) |
-| NFR-1 Accessibility | axe (WCAG 2.1 A/AA) runs on every page the E2E tests visit; the ESLint `jsx-a11y` rule and a manual keyboard pass aren't done |
+| NFR-1 Accessibility | axe (WCAG 2.1 A/AA) runs on every page the E2E tests visit; ESLint `jsx-a11y` is on for the web app, and `jsx-a11y/alt-text` fails the lint when an alt is missing. A manual keyboard pass isn't done |
 | NFR-2 Mobile | E2E runs at desktop, Pixel 7 and iPhone SE sizes and checks for horizontal overflow; screenshot comparisons aren't done |
 | NFR-4 Rate limiting | Done: booking, cancelling and joining the waitlist, per IP and endpoint |
-| NFR-6 Performance | Not checked yet (autocannon, `EXPLAIN ANALYZE`) |
-| NFR-8 CI | GitHub Actions runs type checks, all tests and both builds; ESLint and Prettier aren't set up yet |
+| NFR-6 Performance | Done: a week of 1,000 slots loads with p95 116 ms at 10 concurrent connections (24 ms with one), see [Performance](#performance) |
+| NFR-8 Maintainability | Done: ESLint (typescript-eslint strict, react-hooks, jsx-a11y) and Prettier for the whole monorepo; GitHub Actions runs them, the type checks, all tests and both builds |
 | API docs | Swagger UI at http://localhost:3000/api/docs, raw OpenAPI at `/api/docs-json` |
 
 ## Requirements
@@ -123,9 +123,61 @@ The end-to-end tests (`e2e/`) work like this:
 - **Browser.** First time only, run `npx playwright install chromium`. The iPhone SE run uses Chromium at the iPhone's size, so only one browser is needed.
 - **Report.** `npm run report -w @slotbook/e2e` opens the last report.
 
+## Linting and formatting
+
+```bash
+npm run lint            # ESLint for every workspace
+npm run format:check    # Prettier, without changing files
+npm run format          # Prettier, rewriting files
+```
+
+- **ESLint** (`eslint.config.mjs`, flat config) uses typescript-eslint's `strictTypeChecked` and
+  `stylisticTypeChecked` rules, each file checked against its own project's `tsconfig`. The web app
+  adds `react-hooks` and `jsx-a11y`. Tests may use `any` (supertest bodies) and untyped mocks.
+- **Prettier** (`.prettierrc.json`) keeps the existing style: single quotes, 2 spaces, trailing
+  commas, 120 characters per line. Markdown files keep their hand-written layout.
+- The type-aware rules read the generated Prisma client types. `npx prisma migrate dev` creates
+  them; on their own, `npx prisma generate` does.
+
+## Performance
+
+NFR-6 asks for p95 under 200 ms when loading a week with 1,000 slots, on a local machine.
+
+```bash
+npm run perf -w @slotbook/api     # needs `docker compose up -d`; not run in CI
+```
+
+`apps/api/perf/slots-week.ts` creates a throwaway `slotbook_perf` database in the Compose Postgres,
+seeds next week with 1,000 back-to-back 10-minute slots (every third one booked, every 50th deleted)
+plus 12 more weeks around it (13,000 slots, 4,342 bookings) and some waitlist entries, starts the
+built API against it with logging on, and loads `GET /slots` for that week with autocannon. Then it
+prints `EXPLAIN ANALYZE` for the two queries behind the endpoint and drops the database. It exits
+with 1 if the p95 is 200 ms or more. `PERF_DURATION`, `PERF_CONNECTIONS` and `PERF_KEEP_DB=1`
+change the run.
+
+Results on a Windows 11 laptop (Node 24, Postgres 16 in Docker Desktop), 987 slots per response:
+
+| Run | Requests/s | p50 | p95 | p99 |
+|---|---|---|---|---|
+| Before the fix, 10 connections, 20 s | 55 | 174 ms | 234 ms | 264 ms |
+| After the fix, 10 connections, 20 s | 102 | 96 ms | **116 ms** | 127 ms |
+| After the fix, 1 connection, 10 s | 54 | 18 ms | 24 ms | 29 ms |
+
+- **The database wasn't the bottleneck.** The slots query is an index scan on `slot_starts_at_idx`
+  (0.4 ms for 987 rows) and the notified-waitlist query takes under 0.1 ms, so no index changes
+  were needed. The waitlist query reads a handful of rows; at a larger scale, the unique
+  `(date, email)` index already covers its date range.
+- **The fix.** A CPU profile showed 28% of the time in Luxon: `GET /slots` turned every slot's
+  start into a zoned date to find which notified waitlist dates still had a free slot. It now turns
+  each notified date into one UTC range and compares instants, with the same result.
+- What's left is mostly Prisma reading the rows and JSON serialization; with 10 requests in flight
+  at once, each waits for the others on Node's single thread, which is why p50 there is about ten
+  times the single-connection time.
+
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on every push and pull request:
+- **`lint` job:** `npm run lint` and `npm run format:check`.
 - **`test` job (Node 20 and 22):** type-checks all three projects, runs the unit and integration tests (Testcontainers uses the runner's Docker) and the web tests, and builds both apps.
 - **`e2e` job:** runs the Playwright suite against a Postgres service container and uploads the HTML report if anything fails.
 

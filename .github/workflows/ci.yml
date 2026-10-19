@@ -1,4 +1,4 @@
-# NFR-8: type checks, every test level and both builds on every push and pull request.
+# NFR-8: linting, type checks, every test level and both builds on every push and pull request.
 name: CI
 
 on:
@@ -13,6 +13,31 @@ permissions:
   contents: read
 
 jobs:
+  lint:
+    name: Lint and formatting
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      # The type-aware ESLint rules need the generated Prisma types.
+      - name: Generate the Prisma client
+        run: npx prisma generate --schema apps/api/prisma/schema.prisma
+
+      # ESLint with typescript-eslint strict rules, react-hooks and jsx-a11y (a missing alt fails here).
+      - name: ESLint
+        run: npm run lint
+
+      - name: Prettier
+        run: npm run format:check
+
   test:
     name: Type-check, unit and integration tests (Node ${{ matrix.node }})
     runs-on: ubuntu-latest

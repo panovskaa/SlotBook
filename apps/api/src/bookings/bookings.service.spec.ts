@@ -27,7 +27,7 @@ class FixedClock extends Clock {
 }
 
 /** A Prisma stand-in: each $transaction runs the callback against an in-memory slot. */
-function setup(options: { minutesBefore?: number; createErrors?: unknown[]; references?: string[] } = {}) {
+function setup(options: { minutesBefore?: number; createErrors?: Error[]; references?: string[] } = {}) {
   const slot = { id: SLOT_ID, startsAt: STARTS_AT, endsAt: new Date('2026-11-03T10:30:00Z'), status: 'AVAILABLE' };
   const createErrors = [...(options.createErrors ?? [])];
   const created: { reference: string }[] = [];
@@ -98,7 +98,9 @@ describe('BookingsService', () => {
 
     it('turns a hit on the one-booking-per-slot index into 409, without retrying', async () => {
       const { service, prisma } = setup({ createErrors: [uniqueError('booking_one_confirmed_per_slot')] });
-      await expect(service.book(DTO)).rejects.toMatchObject({ response: { statusCode: 409, code: 'SLOT_ALREADY_BOOKED' } });
+      await expect(service.book(DTO)).rejects.toMatchObject({
+        response: { statusCode: 409, code: 'SLOT_ALREADY_BOOKED' },
+      });
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     });
   });
@@ -106,7 +108,9 @@ describe('BookingsService', () => {
   it('returns 409 when the guarded UPDATE changes no row', async () => {
     const { service, tx } = setup();
     tx.slot.updateMany.mockResolvedValueOnce({ count: 0 });
-    await expect(service.book(DTO)).rejects.toMatchObject({ response: { statusCode: 409, code: 'SLOT_ALREADY_BOOKED' } });
+    await expect(service.book(DTO)).rejects.toMatchObject({
+      response: { statusCode: 409, code: 'SLOT_ALREADY_BOOKED' },
+    });
     expect(tx.booking.create).not.toHaveBeenCalled();
   });
 

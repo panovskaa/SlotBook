@@ -12,14 +12,7 @@ import {
 } from '@slotbook/shared';
 import { AppException } from '../common/app-exception';
 import { Clock } from '../common/clock';
-import {
-  dateColumn,
-  fromDateColumn,
-  startOfNextZonedDay,
-  startOfZonedDay,
-  zonedDateOf,
-  zonedToUtc,
-} from '../common/time';
+import { dateColumn, fromDateColumn, startOfNextZonedDay, startOfZonedDay, zonedToUtc } from '../common/time';
 import { APP_CONFIG, AppConfig } from '../config';
 import { SLOT_AVAILABLE, SlotAvailableEvent } from '../events';
 import { PrismaService } from '../prisma/prisma.service';
@@ -45,9 +38,12 @@ export class SlotsService {
   async create(dto: CreateSlotDto): Promise<SlotDto> {
     const startsAt = zonedToUtc(dto.date, dto.startTime, this.config.timezone);
     if (!startsAt) {
-      throw new AppException(400, ErrorCode.VALIDATION_ERROR, 'That time does not exist on that date because the clocks change', [
-        { field: 'startTime', messages: ['This time is skipped when the clocks change'] },
-      ]);
+      throw new AppException(
+        400,
+        ErrorCode.VALIDATION_ERROR,
+        'That time does not exist on that date because the clocks change',
+        [{ field: 'startTime', messages: ['This time is skipped when the clocks change'] }],
+      );
     }
     const now = this.clock.now();
     if (hasStarted(startsAt, now)) {
@@ -68,7 +64,10 @@ export class SlotsService {
     // FR-9: a new slot is an opening for anyone waiting on that date.
     if (created.state === 'AVAILABLE') {
       // Awaited, so the waitlist is up to date by the time the host gets the response.
-      await this.events.emitAsync(SLOT_AVAILABLE, { slotId: slot.id, startsAt: slot.startsAt } satisfies SlotAvailableEvent);
+      await this.events.emitAsync(SLOT_AVAILABLE, {
+        slotId: slot.id,
+        startsAt: slot.startsAt,
+      } satisfies SlotAvailableEvent);
     }
     return created;
   }
@@ -121,10 +120,16 @@ export class SlotsService {
       distinct: ['date'],
       select: { date: true },
     });
-    const datesWithOpenSlots = new Set(
-      dtos.filter((s) => s.state === 'AVAILABLE').map((s) => zonedDateOf(new Date(s.startsAt), timezone)),
-    );
-    const openedUp = notified.map((n) => fromDateColumn(n.date)).filter((d) => datesWithOpenSlots.has(d));
+    // NFR-6: each notified date becomes one UTC range, and slots are compared as plain instants.
+    // Turning every slot into a zoned date with Luxon took most of the request time for a full week.
+    const available = slots.filter((_, i) => dtos[i].state === 'AVAILABLE');
+    const openedUp = notified
+      .map((n) => fromDateColumn(n.date))
+      .filter((date) => {
+        const dayStart = startOfZonedDay(date, timezone);
+        const dayEnd = startOfNextZonedDay(date, timezone);
+        return available.some((s) => s.startsAt >= dayStart && s.startsAt < dayEnd);
+      });
 
     return { timezone, slots: dtos, openedUp };
   }
@@ -157,10 +162,7 @@ export function stateOf(slot: Pick<Slot, 'status' | 'startsAt'>, now: Date): Slo
 
 /** Postgres reports exclusion violations as SQLSTATE 23P01; Prisma passes it through in the message. */
 function isOverlapViolation(err: unknown): boolean {
-  if (
-    err instanceof Prisma.PrismaClientKnownRequestError ||
-    err instanceof Prisma.PrismaClientUnknownRequestError
-  ) {
+  if (err instanceof Prisma.PrismaClientKnownRequestError || err instanceof Prisma.PrismaClientUnknownRequestError) {
     return err.message.includes(SLOT_OVERLAP_CONSTRAINT) || err.message.includes('23P01');
   }
   return false;

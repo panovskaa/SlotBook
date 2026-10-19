@@ -14,7 +14,8 @@ export interface OutgoingEmail {
 export class DevMailer {
   private readonly logger = new Logger('DevMailer');
 
-  async send(email: OutgoingEmail): Promise<void> {
+  send(email: OutgoingEmail): Promise<void> {
     this.logger.log({ email }, `Email to ${email.to}: ${email.subject}`);
+    return Promise.resolve();
   }
 }

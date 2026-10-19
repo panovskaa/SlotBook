@@ -25,7 +25,10 @@ describe('Bookings (FR-3, FR-4, FR-6)', () => {
     t.prisma.slot.create({
       data: { startsAt: new Date(startsAt), endsAt: new Date(new Date(startsAt).getTime() + minutes * 60_000) },
     });
-  const book = (slotId: string, booker: object = BOOKER) => http().post('/bookings').send({ slotId, ...booker });
+  const book = (slotId: string, booker: object = BOOKER) =>
+    http()
+      .post('/bookings')
+      .send({ slotId, ...booker });
 
   describe('booking a slot', () => {
     it('returns 201 with the reference, the private link and the message', async () => {
@@ -173,7 +176,9 @@ describe('Bookings (FR-3, FR-4, FR-6)', () => {
     it('allows only one confirmed booking per slot', async () => {
       const slot = await slotAt('2026-11-03T10:00:00Z');
       await insertBooking(slot.id, 1, 'CONFIRMED');
-      await expect(insertBooking(slot.id, 2, 'CONFIRMED')).rejects.toThrow(/booking_one_confirmed_per_slot|23505|Unique/);
+      await expect(insertBooking(slot.id, 2, 'CONFIRMED')).rejects.toThrow(
+        /booking_one_confirmed_per_slot|23505|Unique/,
+      );
     });
 
     it('allows cancelled bookings alongside the confirmed one', async () => {
@@ -201,28 +206,26 @@ describe('Bookings (FR-3, FR-4, FR-6)', () => {
     const RACERS = 20;
     const ROUNDS = 50;
 
-    it(
-      `lets exactly 1 of ${RACERS} simultaneous requests book the slot, ${ROUNDS} times over`,
-      async () => {
-        const failures: string[] = [];
-        for (let round = 0; round < ROUNDS; round++) {
-          // A fresh slot each round, an hour apart so they never overlap.
-          const slot = await slotAt(new Date(Date.parse('2026-11-05T00:00:00Z') + round * 3_600_000).toISOString());
-          const results = await Promise.all(
-            Array.from({ length: RACERS }, (_, i) => book(slot.id, { name: `Racer ${i}`, email: `racer${i}@example.com` })),
-          );
+    it(`lets exactly 1 of ${RACERS} simultaneous requests book the slot, ${ROUNDS} times over`, async () => {
+      const failures: string[] = [];
+      for (let round = 0; round < ROUNDS; round++) {
+        // A fresh slot each round, an hour apart so they never overlap.
+        const slot = await slotAt(new Date(Date.parse('2026-11-05T00:00:00Z') + round * 3_600_000).toISOString());
+        const results = await Promise.all(
+          Array.from({ length: RACERS }, (_, i) =>
+            book(slot.id, { name: `Racer ${i}`, email: `racer${i}@example.com` }),
+          ),
+        );
 
-          const created = results.filter((r) => r.status === 201);
-          const conflicts = results.filter((r) => r.status === 409 && r.body.code === 'SLOT_ALREADY_BOOKED');
-          const rows = await t.prisma.booking.count({ where: { slotId: slot.id } });
-          if (created.length !== 1 || conflicts.length !== RACERS - 1 || rows !== 1) {
-            const statuses = results.map((r) => r.status).join(',');
-            failures.push(`round ${round}: statuses ${statuses}, booking rows ${rows}`);
-          }
+        const created = results.filter((r) => r.status === 201);
+        const conflicts = results.filter((r) => r.status === 409 && r.body.code === 'SLOT_ALREADY_BOOKED');
+        const rows = await t.prisma.booking.count({ where: { slotId: slot.id } });
+        if (created.length !== 1 || conflicts.length !== RACERS - 1 || rows !== 1) {
+          const statuses = results.map((r) => r.status).join(',');
+          failures.push(`round ${round}: statuses ${statuses}, booking rows ${rows}`);
         }
-        expect(failures).toEqual([]);
-      },
-      180_000,
-    );
+      }
+      expect(failures).toEqual([]);
+    }, 180_000);
   });
 });

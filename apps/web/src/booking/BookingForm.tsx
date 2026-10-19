@@ -138,7 +138,11 @@ export function problemFromApiError(status: number, body: ApiError | null): Subm
     case 'SLOT_ALREADY_BOOKED':
       return { title: 'Someone has just booked this time.', final: true };
     case 'BOOKING_CUTOFF':
-      return { title: 'Booking for this time has closed.', body: 'Booking closes 30 minutes before start.', final: true };
+      return {
+        title: 'Booking for this time has closed.',
+        body: 'Booking closes 30 minutes before start.',
+        final: true,
+      };
     case 'NOT_FOUND':
       return { title: 'This time is no longer available.', final: true };
     case 'VALIDATION_ERROR': {

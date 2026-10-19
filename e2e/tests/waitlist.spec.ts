@@ -1,5 +1,13 @@
 import { expect, test } from '@playwright/test';
-import { bookSlot, cancelBooking, createSlot, daysFromNow, expectAccessibleAndFits, resetDatabase, weekParam } from '../helpers';
+import {
+  bookSlot,
+  cancelBooking,
+  createSlot,
+  daysFromNow,
+  expectAccessibleAndFits,
+  resetDatabase,
+  weekParam,
+} from '../helpers';
 
 test.beforeEach(resetDatabase);
 

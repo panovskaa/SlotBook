@@ -30,7 +30,13 @@ export function PrivateLink({ path, label, children }: Props) {
       </h2>
       <p className="manage__body">{children}</p>
       <div className="manage__row">
-        <input className="field__input manage__url" readOnly value={url} aria-label={label} onFocus={(e) => e.target.select()} />
+        <input
+          className="field__input manage__url"
+          readOnly
+          value={url}
+          aria-label={label}
+          onFocus={(e) => e.target.select()}
+        />
         <button type="button" className="button button--secondary" onClick={copy}>
           <Icon name={copied ? 'check' : 'copy'} size={16} />
           {copied ? 'Copied' : 'Copy link'}

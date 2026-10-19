@@ -50,7 +50,9 @@ describe('ConfirmationMessageService', () => {
 
   it('still uses an answer that arrives just before the 3 seconds are up', async () => {
     jest.useFakeTimers();
-    const llm = fakeLlm(() => new Promise((resolve) => setTimeout(() => resolve('Just in time, Ada.'), LLM_TIMEOUT_MS - 10)));
+    const llm = fakeLlm(
+      () => new Promise((resolve) => setTimeout(() => resolve('Just in time, Ada.'), LLM_TIMEOUT_MS - 10)),
+    );
     const result = new ConfirmationMessageService(CONFIG, llm).compose('Ada Lovelace', STARTS_AT);
     await jest.advanceTimersByTimeAsync(LLM_TIMEOUT_MS);
     await expect(result).resolves.toBe('Just in time, Ada.');
@@ -60,16 +62,20 @@ describe('ConfirmationMessageService', () => {
     const llm = fakeLlm(async () => {
       throw new Error('429 Too Many Requests');
     });
-    await expect(new ConfirmationMessageService(CONFIG, llm).compose('Ada Lovelace', STARTS_AT)).resolves.toBe(TEMPLATE);
+    await expect(new ConfirmationMessageService(CONFIG, llm).compose('Ada Lovelace', STARTS_AT)).resolves.toBe(
+      TEMPLATE,
+    );
   });
 
   it('falls back to the template when the answer is empty once cleaned', async () => {
     const llm = fakeLlm(async () => ' ** "" ** ');
-    await expect(new ConfirmationMessageService(CONFIG, llm).compose('Ada Lovelace', STARTS_AT)).resolves.toBe(TEMPLATE);
+    await expect(new ConfirmationMessageService(CONFIG, llm).compose('Ada Lovelace', STARTS_AT)).resolves.toBe(
+      TEMPLATE,
+    );
   });
 
   it('shortens an answer longer than 300 characters', async () => {
-    const long = `${'You are booked and we cannot wait to see you. '.repeat(10)}`;
+    const long = 'You are booked and we cannot wait to see you. '.repeat(10);
     const llm = fakeLlm(async () => long);
     const message = await new ConfirmationMessageService(CONFIG, llm).compose('Ada Lovelace', STARTS_AT);
     expect(long.length).toBeGreaterThan(300);

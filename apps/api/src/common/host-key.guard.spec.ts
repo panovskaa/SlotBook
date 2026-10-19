@@ -4,7 +4,9 @@ import { HostKeyGuard } from './host-key.guard';
 
 const contextWithKey = (key?: string) =>
   ({
-    switchToHttp: () => ({ getRequest: () => ({ header: (name: string) => (name === 'x-host-key' ? key : undefined) }) }),
+    switchToHttp: () => ({
+      getRequest: () => ({ header: (name: string) => (name === 'x-host-key' ? key : undefined) }),
+    }),
   }) as unknown as ExecutionContext;
 
 describe('HostKeyGuard', () => {
