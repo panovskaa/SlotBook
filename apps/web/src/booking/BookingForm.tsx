@@ -4,6 +4,7 @@ import { useId, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
+import { SmoothInput } from '../components/ui/skiper-ui/skiper106';
 import { type BookingFormInput, type BookingFormValues, bookingFormSchema } from './schema';
 
 export interface SubmitProblem {
@@ -73,7 +74,11 @@ export function BookingForm({
     );
   }
 
-  const field = (name: keyof BookingFormValues, label: string, props: React.InputHTMLAttributes<HTMLInputElement>) => {
+  const field = (
+    name: keyof BookingFormValues,
+    label: string,
+    props: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> & { type?: 'text' | 'email' },
+  ) => {
     const inputId = `${id}-${name}`;
     const errorId = `${inputId}-error`;
     const error = errors[name]?.message;
@@ -82,9 +87,9 @@ export function BookingForm({
         <label htmlFor={inputId} className="field__label">
           {label}
         </label>
-        <input
+        {/* Skiper UI smooth input: the caret glides as you type (the label and error stay wired to it). */}
+        <SmoothInput
           id={inputId}
-          className="field__input"
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           {...props}
@@ -103,7 +108,7 @@ export function BookingForm({
   return (
     <form className="form" onSubmit={submit} noValidate>
       {field('name', 'Your name', { autoComplete: 'name', maxLength: 120 })}
-      {field('email', 'Email address', { type: 'email', autoComplete: 'email', inputMode: 'email', spellCheck: false })}
+      {field('email', 'Email address', { type: 'email', autoComplete: 'email', spellCheck: false })}
 
       {problem && (
         <div className="notice notice--error" role="alert">

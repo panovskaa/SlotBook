@@ -6,6 +6,7 @@ const paths = {
   clock: 'M12 7v5l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
   chevronLeft: 'M15 5l-7 7 7 7',
   chevronRight: 'M9 5l7 7-7 7',
+  chevronDown: 'M5 9l7 7 7-7',
   alert: 'M12 8v5M12 16.5v.5M10.3 3.9L2.6 17.5A2 2 0 004.3 20.5h15.4a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z',
   copy: 'M9 9h10v10H9zM5 15V5h10',
   calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',

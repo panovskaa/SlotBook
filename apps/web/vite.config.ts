@@ -1,13 +1,18 @@
 /// <reference types="vitest/config" />
 import { fileURLToPath } from 'node:url';
+import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
-    // Use the shared package's TypeScript source directly, so changes show up without a rebuild.
-    alias: { '@slotbook/shared': fileURLToPath(new URL('../../packages/shared/src/index.ts', import.meta.url)) },
+    alias: {
+      // Use the shared package's TypeScript source directly, so changes show up without a rebuild.
+      '@slotbook/shared': fileURLToPath(new URL('../../packages/shared/src/index.ts', import.meta.url)),
+      // shadcn-style imports such as "@/lib/utils".
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
   },
   server: {
     port: 5173,

@@ -243,6 +243,15 @@ e2e              Playwright end-to-end and accessibility tests
   DESIGN.md itself still lists the old values.
 - **Rate limiting.** Uses in-memory counters (`@nestjs/throttler`), which is right for one API instance. Several instances behind a load balancer would need a shared store such as Redis, and `trust proxy` set so the real client IP is counted. A limited request gets 429 `RATE_LIMITED` with a `Retry-After` header.
 - **Swagger.** The `@nestjs/swagger` compiler plugin documents request bodies from the DTOs, validation rules included. Responses are shared TypeScript interfaces, which the plugin can't read, so each endpoint lists its status codes and error codes instead. Only the docs pages get a looser content security policy (Swagger UI needs inline styles).
+- **Skiper UI components.** The landing hero (walking crowd, `skiper39`) and the smooth-caret name and email inputs (`skiper106`) come from [Skiper UI](https://skiper-ui.com), added with `npx shadcn add @skiper-ui/…` (registry set in `apps/web/components.json`). They live in `apps/web/src/components/ui/skiper-ui/`, and each file's header says how it was adapted:
+  - accessibility: the decorative canvas is hidden from screen readers, it holds still when reduced motion is on, and the inputs keep their real labels and error messages
+  - performance: the hero stops drawing while scrolled out of view
+  - typing: strict TypeScript types instead of `any`
+  - removed: `dialkit`, a live-tuning panel, isn't needed
+  - email: the input uses `inputMode="email"` on a text field, so the animated caret can follow the cursor
+
+  The free Skiper UI licence requires attribution, shown under the calendar together with the [Open Peeps](https://www.openpeeps.com) illustrations (`apps/web/public/images/peeps/all-peeps.png`).
+- **Tailwind only for those components.** Tailwind 4 (with `@tailwindcss/vite`) loads its theme and utilities but not its base reset, so the hand-written styles in `app.css` are unchanged. The shadcn colour names (`primary`, `muted`, `foreground`, …) map onto the DESIGN.md tokens in `apps/web/src/styles/tailwind.css`.
 - **Extra error codes.** FR-9 gives status codes but no error codes, so the waitlist adds `ALREADY_ON_WAITLIST` (409) and `DATE_HAS_AVAILABILITY` (422). Rate limiting adds `RATE_LIMITED` (429).
 - **Extra endpoint.** `GET /slots/:id` isn't in the SRS list. The booking page needs it to load its slot when someone opens a `/book/:slotId` link directly.
 - **"This week" before the first response.** The browser doesn't know the app's time zone until the first slot list arrives, so it uses its own zone to pick the opening week. This only matters around midnight on Sunday.

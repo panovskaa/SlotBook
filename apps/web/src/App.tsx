@@ -1,4 +1,4 @@
-import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { SiteHeader } from './components/SiteHeader';
 import { BookPage } from './pages/BookPage';
 import { CalendarPage } from './pages/CalendarPage';
@@ -10,13 +10,15 @@ import { ManagePage } from './pages/ManagePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function Layout() {
+  // The landing page runs edge to edge (its hero is full width); every other page sits in the container.
+  const fullBleed = useLocation().pathname === '/';
   return (
     <>
       <a href="#main" className="skip-link">
         Skip to content
       </a>
       <SiteHeader />
-      <main id="main" className="container">
+      <main id="main" className={fullBleed ? undefined : 'container'}>
         <Outlet />
       </main>
     </>

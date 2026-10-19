@@ -1,0 +1,18 @@
+/*
+ * Tailwind for shadcn/Skiper UI components. Only the theme and utilities are loaded, not Tailwind's
+ * base reset (preflight), so the existing hand-written styles in app.css look exactly as before.
+ */
+@layer theme, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* The colour names shadcn components use, mapped onto the DESIGN.md tokens in tokens.css. */
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-primary: var(--accent);
+  --color-muted: var(--bg-secondary);
+  --color-muted2: var(--bg-secondary);
+  --color-muted3: var(--accent);
+  --font-sans: var(--font);
+}

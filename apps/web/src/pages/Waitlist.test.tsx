@@ -48,7 +48,8 @@ describe('Waitlist status page', () => {
     vi.mocked(api.waitlistStatus).mockResolvedValue(waiting);
     renderAt(`/waitlist/${TOKEN}`, { justJoined: true });
     const heading = await screen.findByRole('heading', { name: "You're on the waitlist." });
-    expect(heading).toHaveFocus();
+    // Focus moves in an effect after the data arrives, so wait for it rather than checking once.
+    await waitFor(() => expect(heading).toHaveFocus());
     expect(screen.getByText('Waiting')).toBeInTheDocument();
     expect(screen.getByLabelText('Private waitlist link')).toHaveValue(`${window.location.origin}/waitlist/${TOKEN}`);
   });

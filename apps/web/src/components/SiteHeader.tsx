@@ -7,7 +7,7 @@ export function SiteHeader() {
         <Link to="/" className="wordmark">
           SlotBook
         </Link>
-        <Link to="/" className="button button--primary button--small">
+        <Link to="/#times" className="button button--primary button--small">
           Book a session
         </Link>
       </div>

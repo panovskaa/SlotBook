@@ -11,7 +11,7 @@
     "skipLibCheck": true,
     "noEmit": true,
     "isolatedModules": true,
-    "paths": { "@slotbook/shared": ["../../packages/shared/src/index.ts"] }
+    "paths": { "@slotbook/shared": ["../../packages/shared/src/index.ts"], "@/*": ["./src/*"] }
   },
   "include": ["src", "vite.config.ts"]
 }

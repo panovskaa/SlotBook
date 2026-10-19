@@ -1,8 +1,9 @@
 import { DateTime } from 'luxon';
 import { useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { api } from '../api/client';
 import { Icon } from '../components/Icon';
+import { LandingHero } from '../components/LandingHero';
 import { ErrorState, LoadingState } from '../components/States';
 import { WeekCalendar } from '../components/WeekCalendar';
 import { getAppTimezone, rememberAppTimezone } from '../lib/timezone';
@@ -31,79 +32,87 @@ export function CalendarPage() {
     weekKey,
   );
 
+  // "Book a session" in the header links to /#times: bring the calendar into view.
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (hash === '#times') document.getElementById('times')?.scrollIntoView();
+  }, [hash]);
+
   const goTo = (target: typeof week) => setParams({ week: formatWeek(target) });
   const isThisWeek = compareWeeks(week, thisWeek) === 0;
   const isPast = compareWeeks(week, thisWeek) < 0;
 
   return (
     <>
-      <section className="intro">
-        <h1 className="display">Find a time that works.</h1>
-        <p className="lede">
-          Pick an open slot below. Booking takes less than a minute, and you can cancel up to an hour before.
-        </p>
-      </section>
+      <LandingHero />
 
-      <section className="panel" aria-labelledby="week-heading">
-        <div className="week-nav">
-          <h2 id="week-heading" className="week-nav__label" aria-live="polite">
-            {weekLabel(week)}
-          </h2>
-          <div className="week-nav__controls">
-            <button
-              type="button"
-              className="button button--secondary button--small"
-              onClick={() => goTo(thisWeek)}
-              disabled={isThisWeek}
-            >
-              Today
-            </button>
-            <button
-              type="button"
-              className="icon-button"
-              onClick={() => goTo(shiftWeek(week, -1))}
-              disabled={isThisWeek || isPast}
-              aria-label="Previous week"
-            >
-              <Icon name="chevronLeft" />
-            </button>
-            <button
-              type="button"
-              className="icon-button"
-              onClick={() => goTo(shiftWeek(week, 1))}
-              aria-label="Next week"
-            >
-              <Icon name="chevronRight" />
-            </button>
-          </div>
-        </div>
-
-        {result.status === 'loading' && <LoadingState label="Loading times…" />}
-        {result.status === 'error' && (
-          <ErrorState title="We couldn't load the times." onRetry={result.retry}>
-            Check your connection and try again.
-          </ErrorState>
-        )}
-        {result.status === 'ready' &&
-          (result.data.slots.length === 0 ? (
-            <div className="empty">
-              <Icon name="calendar" size={28} />
-              <p className="empty__title">No times this week.</p>
-              <p className="empty__body">New times are added regularly. Try the next week.</p>
-              <button type="button" className="button button--secondary" onClick={() => goTo(shiftWeek(week, 1))}>
-                Show next week
+      <div id="times" className="container calendar-section">
+        <section className="panel" aria-labelledby="week-heading">
+          <div className="week-nav">
+            <h2 id="week-heading" className="week-nav__label" aria-live="polite">
+              {weekLabel(week)}
+            </h2>
+            <div className="week-nav__controls">
+              <button
+                type="button"
+                className="button button--secondary button--small"
+                onClick={() => goTo(thisWeek)}
+                disabled={isThisWeek}
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => goTo(shiftWeek(week, -1))}
+                disabled={isThisWeek || isPast}
+                aria-label="Previous week"
+              >
+                <Icon name="chevronLeft" />
+              </button>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => goTo(shiftWeek(week, 1))}
+                aria-label="Next week"
+              >
+                <Icon name="chevronRight" />
               </button>
             </div>
-          ) : (
-            <WeekCalendar
-              dates={dates}
-              slots={result.data.slots}
-              timezone={result.data.timezone}
-              today={DateTime.now().setZone(result.data.timezone).toISODate()!}
-              openedUp={result.data.openedUp}
-            />
-          ))}
-      </section>
+          </div>
+
+          {result.status === 'loading' && <LoadingState label="Loading times…" />}
+          {result.status === 'error' && (
+            <ErrorState title="We couldn't load the times." onRetry={result.retry}>
+              Check your connection and try again.
+            </ErrorState>
+          )}
+          {result.status === 'ready' &&
+            (result.data.slots.length === 0 ? (
+              <div className="empty">
+                <Icon name="calendar" size={28} />
+                <p className="empty__title">No times this week.</p>
+                <p className="empty__body">New times are added regularly. Try the next week.</p>
+                <button type="button" className="button button--secondary" onClick={() => goTo(shiftWeek(week, 1))}>
+                  Show next week
+                </button>
+              </div>
+            ) : (
+              <WeekCalendar
+                dates={dates}
+                slots={result.data.slots}
+                timezone={result.data.timezone}
+                today={DateTime.now().setZone(result.data.timezone).toISODate()!}
+                openedUp={result.data.openedUp}
+              />
+            ))}
+        </section>
+
+        <p className="credits">
+          Hero animation by <a href="https://skiper-ui.com">Skiper UI</a>, illustrations by{' '}
+          <a href="https://www.openpeeps.com">Open Peeps</a>.
+        </p>
+      </div>
     </>
   );
 }
