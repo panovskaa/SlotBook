@@ -34,6 +34,22 @@ describe('GeminiClient', () => {
     await expect(client.generate({ system: '', prompt: '', signal })).rejects.toThrow('Gemini responded with 429');
   });
 
+  it("includes Google's explanation in the error, so the log says what to fix", async () => {
+    const client = new GeminiClient('k', 'old-model', async () =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({ error: { code: 404, message: 'This model is no longer available to new users.' } }),
+          {
+            status: 404,
+          },
+        ),
+      ),
+    );
+    await expect(client.generate({ system: '', prompt: '', signal })).rejects.toThrow(
+      'Gemini responded with 404: This model is no longer available to new users.',
+    );
+  });
+
   it('throws when the answer has no text, e.g. when it was blocked', async () => {
     const client = new GeminiClient('k', 'm', async () => ok({ candidates: [] }));
     await expect(client.generate({ system: '', prompt: '', signal })).rejects.toThrow('Gemini returned no text');

@@ -13,7 +13,8 @@ export interface AppConfig {
   rateLimit: { limit: number; windowMs: number };
 }
 
-export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash-lite';
+// Google closed gemini-2.5-flash-lite to new API keys; this is the free-tier model it recommends instead.
+export const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
 

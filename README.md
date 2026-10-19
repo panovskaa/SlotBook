@@ -60,7 +60,7 @@ the public pages.
 | `WEB_ORIGIN` | No | The web app's origin, for CORS. Default `http://localhost:5173`. |
 | `PORT` | No | API port. Default `3000`. |
 | `GEMINI_API_KEY` | No | Free-tier Gemini key for AI confirmation messages (FR-11), from https://aistudio.google.com/apikey. Without it, a template message is used. |
-| `GEMINI_MODEL` | No | Which Gemini model to use. Default `gemini-2.5-flash-lite` (free tier, fast). |
+| `GEMINI_MODEL` | No | Which Gemini model to use. Default `gemini-3.5-flash-lite` (free tier, about 1 second per message). Older models such as `gemini-2.5-flash-lite` are closed to new API keys and answer 404. |
 | `RATE_LIMIT_MAX` | No | Requests allowed per window, per IP, for each of booking, cancelling and joining the waitlist. Default `10`. |
 | `RATE_LIMIT_WINDOW_SECONDS` | No | Length of that window. Default `60`. |
 
